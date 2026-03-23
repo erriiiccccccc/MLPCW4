@@ -1,0 +1,16 @@
+{
+  "test_acc": 0.5151894539161174,
+  "baseline_acc": 0.5077144014434584,
+  "delta": 0.007475052472659005,
+  "concat_dim": 3072,
+  "embed_dim": 768,
+  "num_layers": 4,
+  "layers_used": [
+    8,
+    9,
+    10,
+    11
+  ],
+  "C_adjusted": 0.25,
+  "C_others": 1.0
+}

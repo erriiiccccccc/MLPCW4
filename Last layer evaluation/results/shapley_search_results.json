@@ -1,0 +1,79 @@
+{
+  "best": {
+    "scaling": "scale after weight",
+    "C": 0.1,
+    "test_acc": 0.5217439334241633
+  },
+  "all": [
+    {
+      "scaling": "scale after weight",
+      "C": 0.1,
+      "test_acc": 0.5217439334241633
+    },
+    {
+      "scaling": "scale after weight",
+      "C": 0.25,
+      "test_acc": 0.5131273704753839
+    },
+    {
+      "scaling": "scale after weight",
+      "C": 0.5,
+      "test_acc": 0.5080458077107192
+    },
+    {
+      "scaling": "scale after weight",
+      "C": 1.0,
+      "test_acc": 0.5034429428876532
+    },
+    {
+      "scaling": "scale after weight",
+      "C": 2.0,
+      "test_acc": 0.5005339323194756
+    },
+    {
+      "scaling": "scale after weight",
+      "C": 5.0,
+      "test_acc": 0.4975880988327135
+    },
+    {
+      "scaling": "scale after weight",
+      "C": 10.0,
+      "test_acc": 0.4972198696468682
+    },
+    {
+      "scaling": "scale before weight",
+      "C": 0.1,
+      "test_acc": 0.5176934123798652
+    },
+    {
+      "scaling": "scale before weight",
+      "C": 0.25,
+      "test_acc": 0.5066097138859226
+    },
+    {
+      "scaling": "scale before weight",
+      "C": 0.5,
+      "test_acc": 0.5021541407371948
+    },
+    {
+      "scaling": "scale before weight",
+      "C": 1.0,
+      "test_acc": 0.49836138012298853
+    },
+    {
+      "scaling": "scale before weight",
+      "C": 2.0,
+      "test_acc": 0.49357440070700004
+    },
+    {
+      "scaling": "scale before weight",
+      "C": 5.0,
+      "test_acc": 0.49029716095297715
+    },
+    {
+      "scaling": "scale before weight",
+      "C": 10.0,
+      "test_acc": 0.4888978900467651
+    }
+  ]
+}

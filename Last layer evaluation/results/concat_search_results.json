@@ -1,0 +1,79 @@
+{
+  "best": {
+    "scaling": "per-layer scale",
+    "C": 0.05,
+    "test_acc": 0.5216702875869942
+  },
+  "all": [
+    {
+      "scaling": "per-layer scale",
+      "C": 0.05,
+      "test_acc": 0.5216702875869942
+    },
+    {
+      "scaling": "per-layer scale",
+      "C": 0.1,
+      "test_acc": 0.518650808263063
+    },
+    {
+      "scaling": "per-layer scale",
+      "C": 0.25,
+      "test_acc": 0.5151894539161174
+    },
+    {
+      "scaling": "per-layer scale",
+      "C": 0.5,
+      "test_acc": 0.5124645579408624
+    },
+    {
+      "scaling": "per-layer scale",
+      "C": 1.0,
+      "test_acc": 0.5095187244541002
+    },
+    {
+      "scaling": "per-layer scale",
+      "C": 2.0,
+      "test_acc": 0.5089295577567478
+    },
+    {
+      "scaling": "per-layer scale",
+      "C": 5.0,
+      "test_acc": 0.5074566410133667
+    },
+    {
+      "scaling": "global scale",
+      "C": 0.05,
+      "test_acc": 0.5216702875869942
+    },
+    {
+      "scaling": "global scale",
+      "C": 0.1,
+      "test_acc": 0.518650808263063
+    },
+    {
+      "scaling": "global scale",
+      "C": 0.25,
+      "test_acc": 0.5151894539161174
+    },
+    {
+      "scaling": "global scale",
+      "C": 0.5,
+      "test_acc": 0.5124645579408624
+    },
+    {
+      "scaling": "global scale",
+      "C": 1.0,
+      "test_acc": 0.5095187244541002
+    },
+    {
+      "scaling": "global scale",
+      "C": 2.0,
+      "test_acc": 0.5089295577567478
+    },
+    {
+      "scaling": "global scale",
+      "C": 5.0,
+      "test_acc": 0.5074566410133667
+    }
+  ]
+}
