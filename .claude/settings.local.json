@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find 'C:\\\\Users\\\\user\\\\Desktop\\\\MLP CW4 CODE' -type f -name *.py -o -name *.ipynb -o -name *.csv -o -name *.json -o -name *.txt -o -name *.log)"
+    ]
+  }
+}
