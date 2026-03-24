@@ -1,0 +1,579 @@
+============================================================
+run_analysis.sh started: Tue 17 Mar 02:37:42 GMT 2026
+Node: landonia23.inf.ed.ac.uk
+============================================================
+
+============================================================
+[STEP 1] Running Phase 2: Temporal semantics...
+============================================================
+The image processor of type `VideoMAEImageProcessor` is now loaded as a fast processor by default, even if the model checkpoint was saved with a slow processor. This is a breaking change and may produce slightly different outputs. To continue using the slow processor, instantiate this class with `use_fast=False`. 
+`use_fast` is set to `True` but the image processor class does not have a fast version.  Falling back to the slow version.
+============================================================
+  Temporal Semantic Analysis — TimeSformer
+============================================================
+Loading model: model_local
+Loading weights:   0%|          | 0/249 [00:00<?, ?it/s]Loading weights: 100%|██████████| 249/249 [00:00<00:00, 17568.58it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:424: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Model loaded. Parameters: 121,392,558
+SSv2 [val]: 24777 videos loaded
+Subset to 20 videos (from 24777)
+
+Collecting baseline predictions...
+Baseline:   0%|          | 0/5 [00:00<?, ?it/s]/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Baseline:  20%|██        | 1/5 [00:05<00:23,  5.76s/it]Baseline:  40%|████      | 2/5 [00:05<00:07,  2.47s/it]Baseline:  60%|██████    | 3/5 [00:06<00:02,  1.42s/it]Baseline:  80%|████████  | 4/5 [00:06<00:00,  1.08it/s]Baseline: 100%|██████████| 5/5 [00:06<00:00,  1.53it/s]Baseline: 100%|██████████| 5/5 [00:06<00:00,  1.30s/it]
+
+Extracting temporal attention patterns...
+Extracting attention:   0%|          | 0/5 [00:00<?, ?it/s]Extracting attention:  20%|██        | 1/5 [00:02<00:09,  2.30s/it]Extracting attention:  40%|████      | 2/5 [00:02<00:03,  1.10s/it]Extracting attention:  60%|██████    | 3/5 [00:03<00:02,  1.03s/it]Extracting attention:  80%|████████  | 4/5 [00:03<00:00,  1.42it/s]Extracting attention: 100%|██████████| 5/5 [00:04<00:00,  1.40it/s]Extracting attention: 100%|██████████| 5/5 [00:04<00:00,  1.11it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+  L0: (20, 12, 8, 8)
+  L1: (20, 12, 8, 8)
+  L2: (20, 12, 8, 8)
+  L3: (20, 12, 8, 8)
+  L4: (20, 12, 8, 8)
+  L5: (20, 12, 8, 8)
+  L6: (20, 12, 8, 8)
+  L7: (20, 12, 8, 8)
+  L8: (20, 12, 8, 8)
+  L9: (20, 12, 8, 8)
+  L10: (20, 12, 8, 8)
+  L11: (20, 12, 8, 8)
+  Saved .npy attention files to outputs/temporal_analysis
+
+--- Attention Pattern Clustering ---
+  uniform: 140 heads
+  diagonal: 2 heads
+  forward: 1 heads
+  backward: 1 heads
+
+--- Temporal Receptive Field ---
+  Peak frame distribution: {4: 48, 0: 42, 7: 26, 3: 12, 1: 6, 2: 4, 5: 3, 6: 3}
+
+--- Head Specialization Scores ---
+  Top-5 most specialized heads:
+    L0-H4: spec=0.264, diag=8.68
+    L10-H2: spec=0.211, diag=0.90
+    L10-H10: spec=0.124, diag=1.20
+    L9-H10: spec=0.098, diag=1.07
+    L0-H0: spec=0.094, diag=4.03
+
+--- Per-Class Head Importance ---
+  Categories: 7
+
+--- Attention Temporal Distance ---
+  Mean distance range: 1.14 - 3.22
+
+============================================================
+TEMPORAL SEMANTICS COMPLETE — 273.4s (4.6 min)
+============================================================
+[STEP 1] Done.
+
+============================================================
+[STEP 2] Running basic ablation sweep (100 videos)...
+============================================================
+The image processor of type `VideoMAEImageProcessor` is now loaded as a fast processor by default, even if the model checkpoint was saved with a slow processor. This is a breaking change and may produce slightly different outputs. To continue using the slow processor, instantiate this class with `use_fast=False`. 
+`use_fast` is set to `True` but the image processor class does not have a fast version.  Falling back to the slow version.
+============================================================
+  TimeSformer Head Ablation on SSv2
+============================================================
+Loading model: model_local
+Loading weights:   0%|          | 0/249 [00:00<?, ?it/s]Loading weights: 100%|██████████| 249/249 [00:00<00:00, 17613.32it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:424: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Model loaded. Parameters: 121,392,558
+
+Loading SSv2 videos (val split)...
+SSv2 [val]: 24777 videos loaded
+Subset to 100 videos (from 24777)
+
+========================================
+PHASE 1: Getting Baseline Predictions
+========================================
+Baseline predictions:   0%|          | 0/50 [00:00<?, ?it/s]/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Baseline predictions:   2%|▏         | 1/50 [00:02<01:59,  2.44s/it]Baseline predictions:   4%|▍         | 2/50 [00:02<00:51,  1.07s/it]Baseline predictions:   6%|▌         | 3/50 [00:02<00:30,  1.56it/s]Baseline predictions:   8%|▊         | 4/50 [00:02<00:19,  2.33it/s]Baseline predictions:  10%|█         | 5/50 [00:02<00:14,  3.12it/s]Baseline predictions:  12%|█▏        | 6/50 [00:03<00:16,  2.60it/s]Baseline predictions:  14%|█▍        | 7/50 [00:03<00:14,  2.90it/s]Baseline predictions:  16%|█▌        | 8/50 [00:04<00:17,  2.38it/s]Baseline predictions:  18%|█▊        | 9/50 [00:04<00:15,  2.64it/s]Baseline predictions:  20%|██        | 10/50 [00:05<00:16,  2.37it/s]Baseline predictions:  22%|██▏       | 11/50 [00:05<00:16,  2.38it/s]Baseline predictions:  24%|██▍       | 12/50 [00:05<00:16,  2.33it/s]Baseline predictions:  26%|██▌       | 13/50 [00:06<00:19,  1.93it/s]Baseline predictions:  28%|██▊       | 14/50 [00:06<00:14,  2.54it/s]Baseline predictions:  30%|███       | 15/50 [00:07<00:19,  1.83it/s]Baseline predictions:  34%|███▍      | 17/50 [00:08<00:15,  2.11it/s]Baseline predictions:  36%|███▌      | 18/50 [00:08<00:12,  2.62it/s]Baseline predictions:  38%|███▊      | 19/50 [00:09<00:14,  2.11it/s]Baseline predictions:  40%|████      | 20/50 [00:09<00:12,  2.48it/s]Baseline predictions:  42%|████▏     | 21/50 [00:10<00:13,  2.12it/s]Baseline predictions:  44%|████▍     | 22/50 [00:10<00:10,  2.62it/s]Baseline predictions:  46%|████▌     | 23/50 [00:10<00:12,  2.16it/s]Baseline predictions:  48%|████▊     | 24/50 [00:11<00:09,  2.70it/s]Baseline predictions:  50%|█████     | 25/50 [00:11<00:10,  2.44it/s]Baseline predictions:  52%|█████▏    | 26/50 [00:11<00:09,  2.62it/s]Baseline predictions:  54%|█████▍    | 27/50 [00:12<00:09,  2.42it/s]Baseline predictions:  56%|█████▌    | 28/50 [00:12<00:09,  2.35it/s]Baseline predictions:  58%|█████▊    | 29/50 [00:13<00:08,  2.36it/s]Baseline predictions:  60%|██████    | 30/50 [00:13<00:08,  2.35it/s]Baseline predictions:  62%|██████▏   | 31/50 [00:13<00:07,  2.65it/s]Baseline predictions:  64%|██████▍   | 32/50 [00:14<00:07,  2.33it/s]Baseline predictions:  66%|██████▌   | 33/50 [00:14<00:06,  2.81it/s]Baseline predictions:  68%|██████▊   | 34/50 [00:15<00:07,  2.08it/s]Baseline predictions:  72%|███████▏  | 36/50 [00:16<00:06,  2.14it/s]Baseline predictions:  74%|███████▍  | 37/50 [00:16<00:04,  2.63it/s]Baseline predictions:  76%|███████▌  | 38/50 [00:17<00:05,  2.14it/s]Baseline predictions:  78%|███████▊  | 39/50 [00:17<00:04,  2.70it/s]Baseline predictions:  80%|████████  | 40/50 [00:18<00:04,  2.10it/s]Baseline predictions:  82%|████████▏ | 41/50 [00:18<00:03,  2.70it/s]Baseline predictions:  84%|████████▍ | 42/50 [00:19<00:04,  1.86it/s]Baseline predictions:  86%|████████▌ | 43/50 [00:19<00:02,  2.44it/s]Baseline predictions:  88%|████████▊ | 44/50 [00:19<00:02,  2.01it/s]Baseline predictions:  92%|█████████▏| 46/50 [00:20<00:01,  2.23it/s]Baseline predictions:  96%|█████████▌| 48/50 [00:21<00:00,  2.30it/s]Baseline predictions: 100%|██████████| 50/50 [00:22<00:00,  2.57it/s]Baseline predictions: 100%|██████████| 50/50 [00:22<00:00,  2.25it/s]
+Baseline predictions for 100 videos captured
+Unique SSv2 classes predicted: 66
+  Stuffing [something] into [something]: 5 videos
+  Uncovering [something]: 3 videos
+  Tilting [something] with [something] on it until it falls off: 3 videos
+  Tearing [something] into two pieces: 3 videos
+  Spinning [something] so it continues spinning: 3 videos
+
+========================================
+PHASE 2: Head Ablation Sweep
+========================================
+[1/120] L0-T-H0 | flip=0.000 KL=0.0007 corr=0.9999
+[2/120] L0-T-H1 | flip=0.010 KL=0.0003 corr=0.9999
+[3/120] L0-T-H2 | flip=0.010 KL=0.0003 corr=1.0000
+[12/120] L0-T-H11 | flip=0.010 KL=0.0006 corr=0.9999
+[24/120] L0-S-H11 | flip=0.020 KL=0.0017 corr=0.9996
+[36/120] L3-T-H11 | flip=0.040 KL=0.0073 corr=0.9987
+[48/120] L3-S-H11 | flip=0.050 KL=0.0099 corr=0.9975
+[60/120] L6-T-H11 | flip=0.060 KL=0.0075 corr=0.9988
+[72/120] L6-S-H11 | flip=0.080 KL=0.0207 corr=0.9947
+[84/120] L9-T-H11 | flip=0.040 KL=0.0087 corr=0.9982
+[96/120] L9-S-H11 | flip=0.020 KL=0.0072 corr=0.9981
+[108/120] L11-T-H11 | flip=0.070 KL=0.0193 corr=0.9952
+[120/120] L11-S-H11 | flip=0.060 KL=0.0347 corr=0.9918
+
+Results saved to outputs/ssv2_ablation/ablation_results.csv
+
+========================================
+ABLATION SUMMARY (SSv2)
+========================================
+
+TEMPORAL heads:
+  Mean flip rate:      0.0505
+  Max flip rate:       0.1000
+  Mean KL divergence:  0.0086
+  Mean logit corr:     0.9981
+  Top-3 most impactful heads:
+    L6-H7: flip=0.100, KL=0.0207
+    L9-H10: flip=0.100, KL=0.0120
+    L3-H5: flip=0.090, KL=0.0261
+
+SPATIAL heads:
+  Mean flip rate:      0.0807
+  Max flip rate:       0.2800
+  Mean KL divergence:  0.0271
+  Mean logit corr:     0.9944
+  Top-3 most impactful heads:
+    L0-H9: flip=0.280, KL=0.2742
+    L0-H4: flip=0.170, KL=0.1588
+    L3-H4: flip=0.130, KL=0.0202
+
+========================================
+PHASE 3: Gradient-Based Importance
+========================================
+
+Computing gradient-based importance over 10 batches...
+Grad importance:   0%|          | 0/10 [00:00<?, ?it/s]/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Grad importance:  10%|█         | 1/10 [00:03<00:27,  3.08s/it]Grad importance:  20%|██        | 2/10 [00:03<00:11,  1.47s/it]Grad importance:  30%|███       | 3/10 [00:03<00:06,  1.04it/s]Grad importance:  40%|████      | 4/10 [00:04<00:04,  1.36it/s]Grad importance:  50%|█████     | 5/10 [00:04<00:02,  1.68it/s]Grad importance:  60%|██████    | 6/10 [00:04<00:02,  1.91it/s]Grad importance:  70%|███████   | 7/10 [00:05<00:01,  2.11it/s]Grad importance:  80%|████████  | 8/10 [00:05<00:00,  2.27it/s]Grad importance:  90%|█████████ | 9/10 [00:06<00:00,  2.14it/s]Grad importance: 100%|██████████| 10/10 [00:06<00:00,  2.23it/s]Grad importance: 100%|██████████| 10/10 [00:07<00:00,  1.33it/s]
+Gradient importance scores saved to outputs/ssv2_ablation/gradient_importance.csv
+
+========================================
+PHASE 4: Generating Visualizations
+========================================
+Heatmap saved to outputs/ssv2_ablation/ablation_heatmaps.png
+Layer importance plot saved to outputs/ssv2_ablation/layer_importance.png
+Scatter plot saved to outputs/ssv2_ablation/temporal_vs_spatial_scatter.png
+Pruning curve saved to outputs/ssv2_ablation/cumulative_pruning.png
+Importance heatmap saved to outputs/ssv2_ablation/gradient_importance_heatmaps.png
+
+============================================================
+COMPLETE — 2595.6s (43.3 min)
+Tested 120 heads on 100 SSv2 videos
+============================================================
+
+All outputs in: /disk/scratch_big/MLPG102/head_ablation/outputs/ssv2_ablation
+  ablation_heatmaps.png (193.7 KB)
+  ablation_results.csv (10.9 KB)
+  cumulative_pruning.png (102.8 KB)
+  experiment_summary.json (0.3 KB)
+  gradient_importance.csv (9.2 KB)
+  gradient_importance_heatmaps.png (516.0 KB)
+  layer_importance.png (80.3 KB)
+  temporal_vs_spatial_scatter.png (71.1 KB)
+[STEP 2] Done.
+
+============================================================
+[STEP 3] Running Phase 3: Training recommendations...
+============================================================
+============================================================
+  Training Recommendations — TimeSformer Temporal Heads
+============================================================
+
+Loaded Shapley values: 144 entries, layers [np.int64(0), np.int64(1), np.int64(2), np.int64(3), np.int64(4), np.int64(5), np.int64(6), np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11)]
+Loaded semantics: 144 entries
+Loaded ablation results: 120 entries
+Loaded attention patterns from .npy files: 12 layers
+
+--- Head Redundancy Matrix ---
+  Total pairs: 792
+  Highly redundant pairs (sim > 0.9): 700
+    L0-H0 <-> H1: 0.981
+    L0-H0 <-> H2: 0.928
+    L0-H0 <-> H4: 0.952
+    L0-H0 <-> H5: 0.943
+    L0-H0 <-> H6: 0.938
+
+--- Layer Contribution Analysis ---
+  L0: Shapley total=0.0561, T/S ratio=0.19
+  L1: Shapley total=0.0574
+  L2: Shapley total=0.0449
+  L3: Shapley total=0.0773, T/S ratio=0.70
+  L4: Shapley total=0.1040
+  L5: Shapley total=0.0515
+  L6: Shapley total=0.1255, T/S ratio=0.82
+  L7: Shapley total=0.0490
+  L8: Shapley total=0.0770
+  L9: Shapley total=0.1703, T/S ratio=0.92
+  L10: Shapley total=0.1939
+  L11: Shapley total=0.4485, T/S ratio=0.64
+
+--- Gate Value Simulation ---
+  L0: gate=0.125 (decrease)
+  L1: gate=0.128 (decrease)
+  L2: gate=0.100 (decrease)
+  L3: gate=0.172 (decrease)
+  L4: gate=0.232 (decrease)
+  L5: gate=0.115 (decrease)
+  L6: gate=0.280 (decrease)
+  L7: gate=0.109 (decrease)
+  L8: gate=0.172 (decrease)
+  L9: gate=0.380 (neutral)
+  L10: gate=0.432 (neutral)
+  L11: gate=1.000 (increase)
+
+--- Pruning Recommendations ---
+  Prunable heads (<1% contribution): 10 / 144
+    L0-H5: |phi|=0.0002, contrib=0.29%
+    L1-H0: |phi|=0.0002, contrib=0.26%
+    L4-H0: |phi|=0.0008, contrib=0.79%
+    L5-H5: |phi|=0.0005, contrib=0.93%
+    L7-H0: |phi|=0.0004, contrib=0.82%
+
+--- Strengthening Recommendations ---
+  Candidates for strengthening: 0
+
+Report saved to outputs/temporal_analysis/training_recommendations.json
+
+============================================================
+TRAINING RECOMMENDATIONS COMPLETE — 0.5s
+============================================================
+[STEP 3] Done.
+
+============================================================
+[STEP 4] Running Phase 4: Visualizations...
+============================================================
+============================================================
+  Temporal Analysis Visualizations
+============================================================
+
+1. Shapley heatmap
+  Shapley heatmap saved to outputs/temporal_analysis/shapley_heatmap.png
+
+2. Attention pattern gallery
+  Attention gallery saved to outputs/temporal_analysis/attention_patterns.png
+
+3. Head clustering dendrogram
+  Dendrogram saved to outputs/temporal_analysis/head_clustering.png
+
+4. Semantic importance by category
+  Semantic importance chart saved to outputs/temporal_analysis/semantic_importance.png
+
+5. Redundancy matrix heatmaps
+  Redundancy matrices saved to outputs/temporal_analysis/redundancy_matrices.png
+
+6-8. Propagation visualizations — SKIPPED (no propagation_effects.csv)
+
+============================================================
+VISUALIZATIONS COMPLETE
+============================================================
+[STEP 4] Done.
+
+============================================================
+[STEP 5] Running Phase 5: Downstream propagation analysis...
+============================================================
+The image processor of type `VideoMAEImageProcessor` is now loaded as a fast processor by default, even if the model checkpoint was saved with a slow processor. This is a breaking change and may produce slightly different outputs. To continue using the slow processor, instantiate this class with `use_fast=False`. 
+`use_fast` is set to `True` but the image processor class does not have a fast version.  Falling back to the slow version.
+============================================================
+  Downstream Propagation Analysis — TimeSformer
+============================================================
+  Videos: 20
+  Source layers: [0, 3, 6, 9, 11]
+  Batch size: 2
+  Device: cuda
+  Data: SSv2 (/disk/scratch/MLPG102/evaluation_frames)
+  Output: outputs/temporal_analysis
+
+Loading model: model_local
+Loading weights:   0%|          | 0/249 [00:00<?, ?it/s]Loading weights: 100%|██████████| 249/249 [00:00<00:00, 17206.20it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:424: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Model loaded. Parameters: 121,392,558
+SSv2 [val]: 24777 videos loaded
+Subset to 20 videos (from 24777)
+
+Analyzing propagation for 5 source layers x 12 heads = 60 combos...
+
+  Source layer 0: capturing baseline...
+  [1/60] L0-H0 done
+  [2/60] L0-H1 done
+  [6/60] L0-H5 done
+  [12/60] L0-H11 done
+
+  Source layer 3: capturing baseline...
+  [18/60] L3-H5 done
+  [24/60] L3-H11 done
+
+  Source layer 6: capturing baseline...
+  [30/60] L6-H5 done
+  [36/60] L6-H11 done
+
+  Source layer 9: capturing baseline...
+  [42/60] L9-H5 done
+  [48/60] L9-H11 done
+
+  Source layer 11: capturing baseline...
+  [54/60] L11-H5 done
+  [60/60] L11-H11 done
+
+Propagation effects saved to outputs/temporal_analysis/propagation_effects.csv
+Propagation matrices saved (11 metrics)
+
+Propagation classification:
+  amplifying: 29 heads
+  stable: 19 heads
+
+============================================================
+DOWNSTREAM PROPAGATION COMPLETE — 2285.4s (38.1 min)
+============================================================
+  L0: downstream mean cos=0.9986, l2=0.0322, cka=0.9901, t_jsd=0.0009, s_jsd=0.0000
+  L3: downstream mean cos=0.9953, l2=0.0665, cka=0.9874, t_jsd=0.0018, s_jsd=0.0000
+  L6: downstream mean cos=0.9966, l2=0.0454, cka=1.0000, t_jsd=0.0008, s_jsd=0.0000
+  L9: downstream mean cos=0.9973, l2=0.0487, cka=1.0000, t_jsd=0.0005, s_jsd=0.0000
+
+  Strongest effects (lowest cosine similarity):
+    L3-H5 -> L10: cos=0.9863, cka=0.9550
+    L3-H5 -> L11: cos=0.9870, cka=0.9552
+    L3-H5 -> L9: cos=0.9872, cka=0.9552
+    L3-H5 -> L8: cos=0.9878, cka=0.9557
+    L3-H5 -> L7: cos=0.9880, cka=0.9560
+
+Summary saved to outputs/temporal_analysis/propagation_summary.json
+[STEP 5] Done.
+
+============================================================
+[SANITY A] Shapley vs Flip Rate correlation...
+============================================================
+Spearman correlation: 0.410, p-value: 0.0011
+
+============================================================
+[SANITY B] Attention reproducibility check...
+============================================================
+The image processor of type `VideoMAEImageProcessor` is now loaded as a fast processor by default, even if the model checkpoint was saved with a slow processor. This is a breaking change and may produce slightly different outputs. To continue using the slow processor, instantiate this class with `use_fast=False`. 
+`use_fast` is set to `True` but the image processor class does not have a fast version.  Falling back to the slow version.
+============================================================
+  Temporal Semantic Analysis — TimeSformer
+============================================================
+Loading model: model_local
+Loading weights:   0%|          | 0/249 [00:00<?, ?it/s]Loading weights: 100%|██████████| 249/249 [00:00<00:00, 18548.98it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:424: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Model loaded. Parameters: 121,392,558
+SSv2 [val]: 24777 videos loaded
+Subset to 5 videos (from 24777)
+
+Collecting baseline predictions...
+Baseline:   0%|          | 0/3 [00:00<?, ?it/s]/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Baseline:  33%|███▎      | 1/3 [00:03<00:07,  3.90s/it]Baseline: 100%|██████████| 3/3 [00:04<00:00,  1.08s/it]Baseline: 100%|██████████| 3/3 [00:04<00:00,  1.38s/it]
+
+Extracting temporal attention patterns...
+Extracting attention:   0%|          | 0/3 [00:00<?, ?it/s]Extracting attention:  33%|███▎      | 1/3 [00:01<00:02,  1.22s/it]Extracting attention:  67%|██████▋   | 2/3 [00:01<00:00,  1.76it/s]Extracting attention: 100%|██████████| 3/3 [00:01<00:00,  2.09it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+  L0: (5, 12, 8, 8)
+  L1: (5, 12, 8, 8)
+  L2: (5, 12, 8, 8)
+  L3: (5, 12, 8, 8)
+  L4: (5, 12, 8, 8)
+  L5: (5, 12, 8, 8)
+  L6: (5, 12, 8, 8)
+  L7: (5, 12, 8, 8)
+  L8: (5, 12, 8, 8)
+  L9: (5, 12, 8, 8)
+  L10: (5, 12, 8, 8)
+  L11: (5, 12, 8, 8)
+  Saved .npy attention files to outputs/sanity_check
+
+--- Attention Pattern Clustering ---
+  uniform: 139 heads
+  diagonal: 3 heads
+  forward: 1 heads
+  backward: 1 heads
+
+--- Temporal Receptive Field ---
+  Peak frame distribution: {0: 58, 4: 25, 7: 18, 5: 13, 1: 11, 3: 9, 2: 7, 6: 3}
+
+--- Head Specialization Scores ---
+  Top-5 most specialized heads:
+    L0-H4: spec=0.335, diag=11.21
+    L10-H2: spec=0.205, diag=0.92
+    L10-H10: spec=0.150, diag=1.17
+    L0-H0: spec=0.150, diag=5.48
+    L9-H10: spec=0.096, diag=1.12
+
+--- Per-Class Head Importance ---
+  Categories: 4
+
+--- Attention Temporal Distance ---
+  Mean distance range: 0.97 - 3.42
+
+============================================================
+TEMPORAL SEMANTICS COMPLETE — 90.6s (1.5 min)
+============================================================
+The image processor of type `VideoMAEImageProcessor` is now loaded as a fast processor by default, even if the model checkpoint was saved with a slow processor. This is a breaking change and may produce slightly different outputs. To continue using the slow processor, instantiate this class with `use_fast=False`. 
+`use_fast` is set to `True` but the image processor class does not have a fast version.  Falling back to the slow version.
+============================================================
+  Temporal Semantic Analysis — TimeSformer
+============================================================
+Loading model: model_local
+Loading weights:   0%|          | 0/249 [00:00<?, ?it/s]Loading weights: 100%|██████████| 249/249 [00:00<00:00, 17861.53it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:424: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Model loaded. Parameters: 121,392,558
+SSv2 [val]: 24777 videos loaded
+Subset to 5 videos (from 24777)
+
+Collecting baseline predictions...
+Baseline:   0%|          | 0/3 [00:00<?, ?it/s]/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Baseline:  33%|███▎      | 1/3 [00:01<00:03,  1.75s/it]Baseline: 100%|██████████| 3/3 [00:01<00:00,  1.97it/s]Baseline: 100%|██████████| 3/3 [00:01<00:00,  1.54it/s]
+
+Extracting temporal attention patterns...
+Extracting attention:   0%|          | 0/3 [00:00<?, ?it/s]Extracting attention:  33%|███▎      | 1/3 [00:01<00:02,  1.19s/it]Extracting attention:  67%|██████▋   | 2/3 [00:01<00:00,  1.76it/s]Extracting attention: 100%|██████████| 3/3 [00:01<00:00,  2.10it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+  L0: (5, 12, 8, 8)
+  L1: (5, 12, 8, 8)
+  L2: (5, 12, 8, 8)
+  L3: (5, 12, 8, 8)
+  L4: (5, 12, 8, 8)
+  L5: (5, 12, 8, 8)
+  L6: (5, 12, 8, 8)
+  L7: (5, 12, 8, 8)
+  L8: (5, 12, 8, 8)
+  L9: (5, 12, 8, 8)
+  L10: (5, 12, 8, 8)
+  L11: (5, 12, 8, 8)
+  Saved .npy attention files to outputs/sanity_check
+
+--- Attention Pattern Clustering ---
+  uniform: 139 heads
+  diagonal: 3 heads
+  forward: 1 heads
+  backward: 1 heads
+
+--- Temporal Receptive Field ---
+  Peak frame distribution: {0: 58, 4: 25, 7: 18, 5: 13, 1: 11, 3: 9, 2: 7, 6: 3}
+
+--- Head Specialization Scores ---
+  Top-5 most specialized heads:
+    L0-H4: spec=0.335, diag=11.21
+    L10-H2: spec=0.205, diag=0.92
+    L10-H10: spec=0.150, diag=1.17
+    L0-H0: spec=0.150, diag=5.48
+    L9-H10: spec=0.096, diag=1.12
+
+--- Per-Class Head Importance ---
+  Categories: 4
+
+--- Attention Temporal Distance ---
+  Mean distance range: 0.97 - 3.42
+
+============================================================
+TEMPORAL SEMANTICS COMPLETE — 88.6s (1.5 min)
+============================================================
+Max difference between runs: 0.0
+
+============================================================
+run_analysis.sh completed: Tue 17 Mar 04:15:18 GMT 2026
+============================================================
+
+Output files:
+total 3.0M
+-rw------- 1 s2319195 people 2.1K Mar 17 02:40 attention_clusters.csv
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L0.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L10.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L11.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L1.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L2.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L3.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L4.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L5.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L6.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L7.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L8.npy
+-rw------- 1 s2319195 people  61K Mar 17 02:40 attention_L9.npy
+-rw------- 1 s2319195 people 559K Mar 17 03:29 attention_patterns.png
+-rw------- 1 s2319195 people  651 Mar 17 03:29 gate_simulation.csv
+-rw------- 1 s2319195 people  96K Mar 17 03:29 head_clustering.png
+-rw------- 1 s2319195 people  20K Mar 17 03:29 head_redundancy.csv
+-rw------- 1 s2319195 people 1.7K Mar 17 03:29 layer_contributions.csv
+-rw------- 1 s2319195 people  12K Mar 17 02:44 per_class_importance.csv
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_attention_jsd.npy
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_attention_kl.npy
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_cka.npy
+-rw------- 1 s2319195 people 3.5K Mar 17 04:09 propagation_classification.csv
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_cls_cosine_sim.npy
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_cls_l2_distance.npy
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_cosine_sim.npy
+-rw------- 1 s2319195 people 121K Mar 17 04:09 propagation_effects.csv
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_l2_distance.npy
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_norm_ratio.npy
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_patch_cosine_sim.npy
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_patch_l2_distance.npy
+-rw------- 1 s2319195 people 5.8K Mar 17 04:09 propagation_spatial_attention_jsd.npy
+-rw------- 1 s2319195 people  449 Mar 17 04:09 propagation_summary.json
+-rw------- 1 s2319195 people  11K Mar 17 03:29 pruning_recommendations.csv
+-rw------- 1 s2319195 people 808K Mar 17 03:29 redundancy_matrices.png
+-rw------- 1 s2319195 people  66K Mar 17 03:29 semantic_importance.png
+-rw------- 1 s2319195 people 240K Mar 17 03:29 shapley_heatmap.png
+-rw------- 1 s2319195 people 2.0K Mar 17 02:37 shapley_summary.json
+-rw------- 1 s2319195 people  13K Mar 17 02:36 shapley_values.csv
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L0.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L10.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L11.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L1.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L2.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L3.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L4.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L5.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L6.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L7.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L8.npy
+-rw------- 1 s2319195 people 1.3K Mar 17 03:29 sim_matrix_L9.npy
+-rw------- 1 s2319195 people  11K Mar 17 02:40 specialization_scores.csv
+-rw------- 1 s2319195 people  17K Mar 17 03:29 strengthening_recommendations.csv
+-rw------- 1 s2319195 people 8.6K Mar 17 02:44 temporal_distance.csv
+-rw------- 1 s2319195 people  29K Mar 17 02:40 temporal_receptive_field.csv
+-rw------- 1 s2319195 people  26K Mar 17 02:44 temporal_semantics.csv
+-rw------- 1 s2319195 people 3.4K Mar 17 03:29 training_recommendations.json
+total 1004K
+-rw------- 1 s2319195 people 194K Mar 17 03:28 ablation_heatmaps.png
+-rw------- 1 s2319195 people  11K Mar 17 03:28 ablation_results.csv
+-rw------- 1 s2319195 people 103K Mar 17 03:28 cumulative_pruning.png
+-rw------- 1 s2319195 people  354 Mar 17 03:28 experiment_summary.json
+-rw------- 1 s2319195 people 9.3K Mar 17 03:28 gradient_importance.csv
+-rw------- 1 s2319195 people 517K Mar 17 03:28 gradient_importance_heatmaps.png
+-rw------- 1 s2319195 people  81K Mar 17 03:28 layer_importance.png
+-rw------- 1 s2319195 people  72K Mar 17 03:28 temporal_vs_spatial_scatter.png
+total 344K
+-rw------- 1 s2319195 people 2.1K Mar 17 04:13 attention_clusters.csv
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L0.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L10.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L11.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L1.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L2.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L3.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L4.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L5.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L6.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L7.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L8.npy
+-rw------- 1 s2319195 people  16K Mar 17 04:13 attention_L9.npy
+-rw------- 1 s2319195 people 6.3K Mar 17 04:15 per_class_importance.csv
+-rw------- 1 s2319195 people  26K Mar 17 04:13 run1.csv
+-rw------- 1 s2319195 people  26K Mar 17 04:15 run2.csv
+-rw------- 1 s2319195 people  11K Mar 17 04:13 specialization_scores.csv
+-rw------- 1 s2319195 people 8.6K Mar 17 04:15 temporal_distance.csv
+-rw------- 1 s2319195 people  29K Mar 17 04:13 temporal_receptive_field.csv
+-rw------- 1 s2319195 people  26K Mar 17 04:15 temporal_semantics.csv

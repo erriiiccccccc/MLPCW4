@@ -1,0 +1,707 @@
+============================================================
+run_shapley_full.sh started: Mon 16 Mar 15:36:49 GMT 2026
+Node: landonia23.inf.ed.ac.uk
+============================================================
+
+============================================================
+[SHAPLEY] Running Phase 1: Shapley importance (20 videos, 120 perms, all 12 layers)...
+============================================================
+The image processor of type `VideoMAEImageProcessor` is now loaded as a fast processor by default, even if the model checkpoint was saved with a slow processor. This is a breaking change and may produce slightly different outputs. To continue using the slow processor, instantiate this class with `use_fast=False`. 
+`use_fast` is set to `True` but the image processor class does not have a fast version.  Falling back to the slow version.
+============================================================
+  Monte Carlo Shapley Value Computation
+  Temporal Attention Heads — TimeSformer
+============================================================
+  Videos: 20
+  Permutations per layer: 100
+  Layers: all 12
+  Device: cuda
+  Data: SSv2 (/disk/scratch/MLPG102/evaluation_frames)
+  Output: outputs/temporal_analysis
+
+Loading model: model_local
+Loading weights:   0%|          | 0/249 [00:00<?, ?it/s]Loading weights: 100%|██████████| 249/249 [00:00<00:00, 17279.64it/s]
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:424: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Model loaded. Parameters: 121,392,558
+
+Loading videos...
+SSv2 [val]: 24777 videos loaded
+Subset to 20 videos (from 24777)
+
+Collecting baseline predictions...
+Baseline predictions:   0%|          | 0/5 [00:00<?, ?it/s]/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+Baseline predictions:  20%|██        | 1/5 [00:03<00:14,  3.62s/it]Baseline predictions:  40%|████      | 2/5 [00:03<00:04,  1.59s/it]Baseline predictions:  60%|██████    | 3/5 [00:03<00:01,  1.06it/s]Baseline predictions:  80%|████████  | 4/5 [00:04<00:00,  1.57it/s]Baseline predictions: 100%|██████████| 5/5 [00:04<00:00,  1.47it/s]Baseline predictions: 100%|██████████| 5/5 [00:04<00:00,  1.01it/s]
+Baseline: 20 videos, 19 unique predictions
+
+Computing Shapley values for 12 layers, 100 permutations each
+Value function: 0.5*(1-flip_rate) + 0.5*(-KL_divergence)
+Variance reduction: antithetic sampling
+
+  Layer 0: 100 permutations (50 antithetic pairs)
+  L0 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L0 pair 1/50 done (101.5s this pair, 101.5s total, 24 unique coalitions cached)
+  L0 Shapley:   2%|▏         | 1/50 [01:41<1:22:54, 101.51s/it]  L0 pair 2/50 done (79.4s this pair, 180.9s total, 42 unique coalitions cached)
+  L0 Shapley:   4%|▍         | 2/50 [03:00<1:10:49, 88.53s/it]   L0 pair 3/50 done (97.2s this pair, 278.1s total, 64 unique coalitions cached)
+  L0 Shapley:   6%|▌         | 3/50 [04:38<1:12:26, 92.48s/it]  L0 pair 4/50 done (97.2s this pair, 375.3s total, 86 unique coalitions cached)
+  L0 Shapley:   8%|▊         | 4/50 [06:15<1:12:19, 94.34s/it]  L0 pair 5/50 done (79.8s this pair, 455.1s total, 104 unique coalitions cached)
+  L0 Shapley:  10%|█         | 5/50 [07:35<1:06:48, 89.08s/it]  L0 pair 6/50 done (97.5s this pair, 552.6s total, 126 unique coalitions cached)
+  L0 Shapley:  12%|█▏        | 6/50 [09:12<1:07:25, 91.95s/it]  L0 pair 7/50 done (92.6s this pair, 645.2s total, 146 unique coalitions cached)
+  L0 Shapley:  14%|█▍        | 7/50 [10:45<1:06:02, 92.16s/it]  L0 pair 8/50 done (79.4s this pair, 724.6s total, 164 unique coalitions cached)
+  L0 Shapley:  16%|█▌        | 8/50 [12:04<1:01:40, 88.11s/it]  L0 pair 9/50 done (61.8s this pair, 786.4s total, 178 unique coalitions cached)
+  L0 Shapley:  18%|█▊        | 9/50 [13:06<54:35, 79.89s/it]    L0 pair 10/50 done (61.8s this pair, 848.2s total, 192 unique coalitions cached)
+  L0 Shapley:  20%|██        | 10/50 [14:08<49:31, 74.29s/it]  L0 pair 11/50 done (70.6s this pair, 918.7s total, 208 unique coalitions cached)
+  L0 Shapley:  22%|██▏       | 11/50 [15:18<47:32, 73.15s/it]  L0 pair 12/50 done (61.8s this pair, 980.5s total, 222 unique coalitions cached)
+  L0 Shapley:  24%|██▍       | 12/50 [16:20<44:08, 69.69s/it]  L0 pair 13/50 done (79.5s this pair, 1060.1s total, 240 unique coalitions cached)
+  L0 Shapley:  26%|██▌       | 13/50 [17:40<44:48, 72.67s/it]  L0 pair 14/50 done (61.9s this pair, 1121.9s total, 254 unique coalitions cached)
+  L0 Shapley:  28%|██▊       | 14/50 [18:41<41:38, 69.41s/it]  L0 pair 15/50 done (62.5s this pair, 1184.4s total, 268 unique coalitions cached)
+  L0 Shapley:  30%|███       | 15/50 [19:44<39:16, 67.32s/it]  L0 pair 16/50 done (79.9s this pair, 1264.3s total, 286 unique coalitions cached)
+  L0 Shapley:  32%|███▏      | 16/50 [21:04<40:18, 71.12s/it]  L0 pair 17/50 done (71.1s this pair, 1335.4s total, 302 unique coalitions cached)
+  L0 Shapley:  34%|███▍      | 17/50 [22:15<39:06, 71.10s/it]  L0 pair 18/50 done (79.8s this pair, 1415.2s total, 320 unique coalitions cached)
+  L0 Shapley:  36%|███▌      | 18/50 [23:35<39:18, 73.71s/it]  L0 pair 19/50 done (79.8s this pair, 1495.0s total, 338 unique coalitions cached)
+  L0 Shapley:  38%|███▊      | 19/50 [24:55<39:02, 75.55s/it]  L0 pair 20/50 done (70.8s this pair, 1565.9s total, 354 unique coalitions cached)
+  L0 Shapley:  40%|████      | 20/50 [26:05<37:04, 74.14s/it]  L0 pair 21/50 done (62.0s this pair, 1627.8s total, 368 unique coalitions cached)
+  L0 Shapley:  42%|████▏     | 21/50 [27:07<34:04, 70.48s/it]  L0 pair 22/50 done (70.9s this pair, 1698.7s total, 384 unique coalitions cached)
+  L0 Shapley:  44%|████▍     | 22/50 [28:18<32:56, 70.60s/it]  L0 pair 23/50 done (61.9s this pair, 1760.6s total, 398 unique coalitions cached)
+  L0 Shapley:  46%|████▌     | 23/50 [29:20<30:35, 67.99s/it]  L0 pair 24/50 done (62.5s this pair, 1823.1s total, 412 unique coalitions cached)
+  L0 Shapley:  48%|████▊     | 24/50 [30:23<28:44, 66.34s/it]  L0 pair 25/50 done (53.0s this pair, 1876.1s total, 424 unique coalitions cached)
+  L0 Shapley:  50%|█████     | 25/50 [31:16<25:58, 62.34s/it]  L0 pair 26/50 done (79.5s this pair, 1955.6s total, 442 unique coalitions cached)
+  L0 Shapley:  52%|█████▏    | 26/50 [32:35<26:59, 67.49s/it]  L0 pair 27/50 done (61.9s this pair, 2017.5s total, 456 unique coalitions cached)
+  L0 Shapley:  54%|█████▍    | 27/50 [33:37<25:13, 65.80s/it]  L0 pair 28/50 done (70.7s this pair, 2088.1s total, 472 unique coalitions cached)
+  L0 Shapley:  56%|█████▌    | 28/50 [34:48<24:39, 67.26s/it]  L0 pair 29/50 done (44.1s this pair, 2132.3s total, 482 unique coalitions cached)
+  L0 Shapley:  58%|█████▊    | 29/50 [35:32<21:06, 60.32s/it]  L0 pair 30/50 done (44.3s this pair, 2176.5s total, 492 unique coalitions cached)
+  L0 Shapley:  60%|██████    | 30/50 [36:16<18:30, 55.51s/it]  L0 pair 31/50 done (61.9s this pair, 2238.4s total, 506 unique coalitions cached)
+  L0 Shapley:  62%|██████▏   | 31/50 [37:18<18:10, 57.42s/it]  L0 pair 32/50 done (70.6s this pair, 2309.1s total, 522 unique coalitions cached)
+  L0 Shapley:  64%|██████▍   | 32/50 [38:29<18:24, 61.39s/it]  L0 pair 33/50 done (79.6s this pair, 2388.7s total, 540 unique coalitions cached)
+  L0 Shapley:  66%|██████▌   | 33/50 [39:48<18:56, 66.85s/it]  L0 pair 34/50 done (62.4s this pair, 2451.1s total, 554 unique coalitions cached)
+  L0 Shapley:  68%|██████▊   | 34/50 [40:51<17:28, 65.52s/it]  L0 pair 35/50 done (53.1s this pair, 2504.1s total, 566 unique coalitions cached)
+  L0 Shapley:  70%|███████   | 35/50 [41:44<15:26, 61.78s/it]  L0 pair 36/50 done (44.2s this pair, 2548.3s total, 576 unique coalitions cached)
+  L0 Shapley:  72%|███████▏  | 36/50 [42:28<13:11, 56.51s/it]  L0 pair 37/50 done (44.3s this pair, 2592.7s total, 586 unique coalitions cached)
+  L0 Shapley:  74%|███████▍  | 37/50 [43:12<11:27, 52.85s/it]  L0 pair 38/50 done (70.8s this pair, 2663.5s total, 602 unique coalitions cached)
+  L0 Shapley:  76%|███████▌  | 38/50 [44:23<11:38, 58.24s/it]  L0 pair 39/50 done (44.2s this pair, 2707.7s total, 612 unique coalitions cached)
+  L0 Shapley:  78%|███████▊  | 39/50 [45:07<09:54, 54.03s/it]  L0 pair 40/50 done (53.4s this pair, 2761.1s total, 624 unique coalitions cached)
+  L0 Shapley:  80%|████████  | 40/50 [46:01<08:58, 53.85s/it]  L0 pair 41/50 done (62.3s this pair, 2823.4s total, 638 unique coalitions cached)
+  L0 Shapley:  82%|████████▏ | 41/50 [47:03<08:27, 56.39s/it]  L0 pair 42/50 done (62.0s this pair, 2885.4s total, 652 unique coalitions cached)
+  L0 Shapley:  84%|████████▍ | 42/50 [48:05<07:44, 58.07s/it]  L0 pair 43/50 done (61.9s this pair, 2947.3s total, 666 unique coalitions cached)
+  L0 Shapley:  86%|████████▌ | 43/50 [49:07<06:54, 59.21s/it]  L0 pair 44/50 done (44.5s this pair, 2991.8s total, 676 unique coalitions cached)
+  L0 Shapley:  88%|████████▊ | 44/50 [49:51<05:28, 54.79s/it]  L0 pair 45/50 done (45.1s this pair, 3036.9s total, 686 unique coalitions cached)
+  L0 Shapley:  90%|█████████ | 45/50 [50:36<04:19, 51.89s/it]  L0 pair 46/50 done (62.3s this pair, 3099.3s total, 700 unique coalitions cached)
+  L0 Shapley:  92%|█████████▏| 46/50 [51:39<03:40, 55.03s/it]  L0 pair 47/50 done (26.6s this pair, 3125.8s total, 706 unique coalitions cached)
+  L0 Shapley:  94%|█████████▍| 47/50 [52:05<02:19, 46.50s/it]  L0 pair 48/50 done (62.0s this pair, 3187.9s total, 720 unique coalitions cached)
+  L0 Shapley:  96%|█████████▌| 48/50 [53:07<01:42, 51.16s/it]  L0 pair 49/50 done (35.4s this pair, 3223.3s total, 728 unique coalitions cached)
+  L0 Shapley:  98%|█████████▊| 49/50 [53:43<00:46, 46.43s/it]  L0 pair 50/50 done (53.0s this pair, 3276.3s total, 740 unique coalitions cached)
+  L0 Shapley: 100%|██████████| 50/50 [54:36<00:00, 48.41s/it]                                                               L0: 100 perms, cache size=740, hit rate=43.1%, max |phi|=0.0203
+  Layer 1: 100 permutations (50 antithetic pairs)
+  L1 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L1 pair 1/50 done (101.6s this pair, 101.6s total, 24 unique coalitions cached)
+  L1 Shapley:   2%|▏         | 1/50 [01:41<1:22:59, 101.62s/it]  L1 pair 2/50 done (88.3s this pair, 190.0s total, 44 unique coalitions cached)
+  L1 Shapley:   4%|▍         | 2/50 [03:09<1:15:02, 93.80s/it]   L1 pair 3/50 done (97.2s this pair, 287.1s total, 66 unique coalitions cached)
+  L1 Shapley:   6%|▌         | 3/50 [04:47<1:14:40, 95.33s/it]  L1 pair 4/50 done (97.5s this pair, 384.6s total, 88 unique coalitions cached)
+  L1 Shapley:   8%|▊         | 4/50 [06:24<1:13:45, 96.20s/it]  L1 pair 5/50 done (88.3s this pair, 472.9s total, 108 unique coalitions cached)
+  L1 Shapley:  10%|█         | 5/50 [07:52<1:10:00, 93.35s/it]  L1 pair 6/50 done (88.3s this pair, 561.2s total, 128 unique coalitions cached)
+  L1 Shapley:  12%|█▏        | 6/50 [09:21<1:07:11, 91.63s/it]  L1 pair 7/50 done (53.2s this pair, 614.4s total, 140 unique coalitions cached)
+  L1 Shapley:  14%|█▍        | 7/50 [10:14<56:39, 79.06s/it]    L1 pair 8/50 done (88.3s this pair, 702.7s total, 160 unique coalitions cached)
+  L1 Shapley:  16%|█▌        | 8/50 [11:42<57:24, 82.00s/it]  L1 pair 9/50 done (79.5s this pair, 782.3s total, 178 unique coalitions cached)
+  L1 Shapley:  18%|█▊        | 9/50 [13:02<55:30, 81.23s/it]  L1 pair 10/50 done (79.5s this pair, 861.8s total, 196 unique coalitions cached)
+  L1 Shapley:  20%|██        | 10/50 [14:21<53:48, 80.70s/it]  L1 pair 11/50 done (71.7s this pair, 933.5s total, 212 unique coalitions cached)
+  L1 Shapley:  22%|██▏       | 11/50 [15:33<50:40, 77.96s/it]  L1 pair 12/50 done (79.6s this pair, 1013.1s total, 230 unique coalitions cached)
+  L1 Shapley:  24%|██▍       | 12/50 [16:53<49:41, 78.45s/it]  L1 pair 13/50 done (79.5s this pair, 1092.6s total, 248 unique coalitions cached)
+  L1 Shapley:  26%|██▌       | 13/50 [18:12<48:34, 78.77s/it]  L1 pair 14/50 done (79.5s this pair, 1172.1s total, 266 unique coalitions cached)
+  L1 Shapley:  28%|██▊       | 14/50 [19:32<47:23, 78.99s/it]  L1 pair 15/50 done (61.9s this pair, 1234.0s total, 280 unique coalitions cached)
+  L1 Shapley:  30%|███       | 15/50 [20:33<43:04, 73.83s/it]  L1 pair 16/50 done (79.4s this pair, 1313.4s total, 298 unique coalitions cached)
+  L1 Shapley:  32%|███▏      | 16/50 [21:53<42:47, 75.51s/it]  L1 pair 17/50 done (70.6s this pair, 1384.0s total, 314 unique coalitions cached)
+  L1 Shapley:  34%|███▍      | 17/50 [23:03<40:43, 74.03s/it]  L1 pair 18/50 done (61.8s this pair, 1445.8s total, 328 unique coalitions cached)
+  L1 Shapley:  36%|███▌      | 18/50 [24:05<37:31, 70.37s/it]  L1 pair 19/50 done (35.5s this pair, 1481.3s total, 336 unique coalitions cached)
+  L1 Shapley:  38%|███▊      | 19/50 [24:41<30:56, 59.89s/it]  L1 pair 20/50 done (63.0s this pair, 1544.3s total, 350 unique coalitions cached)
+  L1 Shapley:  40%|████      | 20/50 [25:44<30:24, 60.82s/it]  L1 pair 21/50 done (70.7s this pair, 1615.0s total, 366 unique coalitions cached)
+  L1 Shapley:  42%|████▏     | 21/50 [26:54<30:49, 63.79s/it]  L1 pair 22/50 done (52.9s this pair, 1667.9s total, 378 unique coalitions cached)
+  L1 Shapley:  44%|████▍     | 22/50 [27:47<28:14, 60.53s/it]  L1 pair 23/50 done (79.4s this pair, 1747.4s total, 396 unique coalitions cached)
+  L1 Shapley:  46%|████▌     | 23/50 [29:07<29:47, 66.20s/it]  L1 pair 24/50 done (61.7s this pair, 1809.0s total, 410 unique coalitions cached)
+  L1 Shapley:  48%|████▊     | 24/50 [30:09<28:05, 64.85s/it]  L1 pair 25/50 done (61.4s this pair, 1870.5s total, 424 unique coalitions cached)
+  L1 Shapley:  50%|█████     | 25/50 [31:10<26:35, 63.82s/it]  L1 pair 26/50 done (52.9s this pair, 1923.3s total, 436 unique coalitions cached)
+  L1 Shapley:  52%|█████▏    | 26/50 [32:03<24:12, 60.53s/it]  L1 pair 27/50 done (52.7s this pair, 1976.0s total, 448 unique coalitions cached)
+  L1 Shapley:  54%|█████▍    | 27/50 [32:56<22:18, 58.19s/it]  L1 pair 28/50 done (78.8s this pair, 2054.9s total, 466 unique coalitions cached)
+  L1 Shapley:  56%|█████▌    | 28/50 [34:14<23:36, 64.38s/it]  L1 pair 29/50 done (52.4s this pair, 2107.3s total, 478 unique coalitions cached)
+  L1 Shapley:  58%|█████▊    | 29/50 [35:07<21:16, 60.80s/it]  L1 pair 30/50 done (61.7s this pair, 2169.0s total, 492 unique coalitions cached)
+  L1 Shapley:  60%|██████    | 30/50 [36:09<20:21, 61.08s/it]  L1 pair 31/50 done (52.6s this pair, 2221.7s total, 504 unique coalitions cached)
+  L1 Shapley:  62%|██████▏   | 31/50 [37:01<18:32, 58.55s/it]  L1 pair 32/50 done (61.6s this pair, 2283.3s total, 518 unique coalitions cached)
+  L1 Shapley:  64%|██████▍   | 32/50 [38:03<17:50, 59.48s/it]  L1 pair 33/50 done (52.9s this pair, 2336.2s total, 530 unique coalitions cached)
+  L1 Shapley:  66%|██████▌   | 33/50 [38:56<16:17, 57.50s/it]  L1 pair 34/50 done (35.0s this pair, 2371.3s total, 538 unique coalitions cached)
+  L1 Shapley:  68%|██████▊   | 34/50 [39:31<13:32, 50.76s/it]  L1 pair 35/50 done (61.3s this pair, 2432.5s total, 552 unique coalitions cached)
+  L1 Shapley:  70%|███████   | 35/50 [40:32<13:28, 53.91s/it]  L1 pair 36/50 done (52.5s this pair, 2485.0s total, 564 unique coalitions cached)
+  L1 Shapley:  72%|███████▏  | 36/50 [41:24<12:28, 53.48s/it]  L1 pair 37/50 done (61.1s this pair, 2546.1s total, 578 unique coalitions cached)
+  L1 Shapley:  74%|███████▍  | 37/50 [42:26<12:05, 55.77s/it]  L1 pair 38/50 done (69.9s this pair, 2616.0s total, 594 unique coalitions cached)
+  L1 Shapley:  76%|███████▌  | 38/50 [43:35<11:59, 60.00s/it]  L1 pair 39/50 done (61.2s this pair, 2677.1s total, 608 unique coalitions cached)
+  L1 Shapley:  78%|███████▊  | 39/50 [44:37<11:03, 60.35s/it]  L1 pair 40/50 done (61.2s this pair, 2738.3s total, 622 unique coalitions cached)
+  L1 Shapley:  80%|████████  | 40/50 [45:38<10:05, 60.59s/it]  L1 pair 41/50 done (52.6s this pair, 2790.9s total, 634 unique coalitions cached)
+  L1 Shapley:  82%|████████▏ | 41/50 [46:30<08:43, 58.19s/it]  L1 pair 42/50 done (61.1s this pair, 2852.0s total, 648 unique coalitions cached)
+  L1 Shapley:  84%|████████▍ | 42/50 [47:31<07:52, 59.07s/it]  L1 pair 43/50 done (61.1s this pair, 2913.1s total, 662 unique coalitions cached)
+  L1 Shapley:  86%|████████▌ | 43/50 [48:33<06:57, 59.68s/it]  L1 pair 44/50 done (70.1s this pair, 2983.2s total, 678 unique coalitions cached)
+  L1 Shapley:  88%|████████▊ | 44/50 [49:43<06:16, 62.81s/it]  L1 pair 45/50 done (61.1s this pair, 3044.3s total, 692 unique coalitions cached)
+  L1 Shapley:  90%|█████████ | 45/50 [50:44<05:11, 62.29s/it]  L1 pair 46/50 done (52.4s this pair, 3096.7s total, 704 unique coalitions cached)
+  L1 Shapley:  92%|█████████▏| 46/50 [51:36<03:57, 59.33s/it]  L1 pair 47/50 done (43.7s this pair, 3140.4s total, 714 unique coalitions cached)
+  L1 Shapley:  94%|█████████▍| 47/50 [52:20<02:43, 54.63s/it]  L1 pair 48/50 done (52.4s this pair, 3192.8s total, 726 unique coalitions cached)
+  L1 Shapley:  96%|█████████▌| 48/50 [53:12<01:47, 53.96s/it]  L1 pair 49/50 done (43.6s this pair, 3236.4s total, 736 unique coalitions cached)
+  L1 Shapley:  98%|█████████▊| 49/50 [53:56<00:50, 50.86s/it]  L1 pair 50/50 done (61.1s this pair, 3297.5s total, 750 unique coalitions cached)
+  L1 Shapley: 100%|██████████| 50/50 [54:57<00:00, 53.95s/it]                                                               L1: 100 perms, cache size=750, hit rate=42.3%, max |phi|=0.0217
+  Layer 2: 100 permutations (50 antithetic pairs)
+  L2 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L2 pair 1/50 done (100.7s this pair, 100.7s total, 24 unique coalitions cached)
+  L2 Shapley:   2%|▏         | 1/50 [01:40<1:22:13, 100.68s/it]  L2 pair 2/50 done (87.3s this pair, 188.0s total, 44 unique coalitions cached)
+  L2 Shapley:   4%|▍         | 2/50 [03:07<1:14:14, 92.80s/it]   L2 pair 3/50 done (96.2s this pair, 284.2s total, 66 unique coalitions cached)
+  L2 Shapley:   6%|▌         | 3/50 [04:44<1:13:55, 94.37s/it]  L2 pair 4/50 done (78.5s this pair, 362.7s total, 84 unique coalitions cached)
+  L2 Shapley:   8%|▊         | 4/50 [06:02<1:07:33, 88.12s/it]  L2 pair 5/50 done (96.0s this pair, 458.7s total, 106 unique coalitions cached)
+  L2 Shapley:  10%|█         | 5/50 [07:38<1:08:13, 90.96s/it]  L2 pair 6/50 done (69.8s this pair, 528.5s total, 122 unique coalitions cached)
+  L2 Shapley:  12%|█▏        | 6/50 [08:48<1:01:25, 83.76s/it]  L2 pair 7/50 done (69.8s this pair, 598.3s total, 138 unique coalitions cached)
+  L2 Shapley:  14%|█▍        | 7/50 [09:58<56:44, 79.18s/it]    L2 pair 8/50 done (70.3s this pair, 668.5s total, 154 unique coalitions cached)
+  L2 Shapley:  16%|█▌        | 8/50 [11:08<53:26, 76.34s/it]  L2 pair 9/50 done (61.1s this pair, 729.6s total, 168 unique coalitions cached)
+  L2 Shapley:  18%|█▊        | 9/50 [12:09<48:54, 71.57s/it]  L2 pair 10/50 done (61.1s this pair, 790.7s total, 182 unique coalitions cached)
+  L2 Shapley:  20%|██        | 10/50 [13:10<45:33, 68.33s/it]  L2 pair 11/50 done (78.5s this pair, 869.2s total, 200 unique coalitions cached)
+  L2 Shapley:  22%|██▏       | 11/50 [14:29<46:26, 71.46s/it]  L2 pair 12/50 done (61.0s this pair, 930.3s total, 214 unique coalitions cached)
+  L2 Shapley:  24%|██▍       | 12/50 [15:30<43:15, 68.29s/it]  L2 pair 13/50 done (78.5s this pair, 1008.8s total, 232 unique coalitions cached)
+  L2 Shapley:  26%|██▌       | 13/50 [16:48<44:01, 71.39s/it]  L2 pair 14/50 done (69.7s this pair, 1078.5s total, 248 unique coalitions cached)
+  L2 Shapley:  28%|██▊       | 14/50 [17:58<42:31, 70.89s/it]  L2 pair 15/50 done (78.6s this pair, 1157.1s total, 266 unique coalitions cached)
+  L2 Shapley:  30%|███       | 15/50 [19:17<42:42, 73.20s/it]  L2 pair 16/50 done (78.8s this pair, 1235.9s total, 284 unique coalitions cached)
+  L2 Shapley:  32%|███▏      | 16/50 [20:35<42:26, 74.89s/it]  L2 pair 17/50 done (62.8s this pair, 1298.7s total, 298 unique coalitions cached)
+  L2 Shapley:  34%|███▍      | 17/50 [21:38<39:10, 71.24s/it]  L2 pair 18/50 done (61.5s this pair, 1360.1s total, 312 unique coalitions cached)
+  L2 Shapley:  36%|███▌      | 18/50 [22:40<36:25, 68.30s/it]  L2 pair 19/50 done (79.1s this pair, 1439.2s total, 330 unique coalitions cached)
+  L2 Shapley:  38%|███▊      | 19/50 [23:59<36:57, 71.55s/it]  L2 pair 20/50 done (61.1s this pair, 1500.4s total, 344 unique coalitions cached)
+  L2 Shapley:  40%|████      | 20/50 [25:00<34:12, 68.42s/it]  L2 pair 21/50 done (69.8s this pair, 1570.2s total, 360 unique coalitions cached)
+  L2 Shapley:  42%|████▏     | 21/50 [26:10<33:16, 68.84s/it]  L2 pair 22/50 done (61.6s this pair, 1631.8s total, 374 unique coalitions cached)
+  L2 Shapley:  44%|████▍     | 22/50 [27:11<31:06, 66.66s/it]  L2 pair 23/50 done (61.6s this pair, 1693.4s total, 388 unique coalitions cached)
+  L2 Shapley:  46%|████▌     | 23/50 [28:13<29:18, 65.14s/it]  L2 pair 24/50 done (70.1s this pair, 1763.4s total, 404 unique coalitions cached)
+  L2 Shapley:  48%|████▊     | 24/50 [29:23<28:52, 66.62s/it]  L2 pair 25/50 done (70.2s this pair, 1833.6s total, 420 unique coalitions cached)
+  L2 Shapley:  50%|█████     | 25/50 [30:33<28:12, 67.69s/it]  L2 pair 26/50 done (70.2s this pair, 1903.8s total, 436 unique coalitions cached)
+  L2 Shapley:  52%|█████▏    | 26/50 [31:43<27:22, 68.44s/it]  L2 pair 27/50 done (78.6s this pair, 1982.4s total, 454 unique coalitions cached)
+  L2 Shapley:  54%|█████▍    | 27/50 [33:02<27:24, 71.48s/it]  L2 pair 28/50 done (78.8s this pair, 2061.2s total, 472 unique coalitions cached)
+  L2 Shapley:  56%|█████▌    | 28/50 [34:21<27:00, 73.68s/it]  L2 pair 29/50 done (61.1s this pair, 2122.3s total, 486 unique coalitions cached)
+  L2 Shapley:  58%|█████▊    | 29/50 [35:22<24:27, 69.90s/it]  L2 pair 30/50 done (52.3s this pair, 2174.6s total, 498 unique coalitions cached)
+  L2 Shapley:  60%|██████    | 30/50 [36:14<21:32, 64.64s/it]  L2 pair 31/50 done (43.6s this pair, 2218.3s total, 508 unique coalitions cached)
+  L2 Shapley:  62%|██████▏   | 31/50 [36:58<18:28, 58.34s/it]  L2 pair 32/50 done (78.6s this pair, 2296.8s total, 526 unique coalitions cached)
+  L2 Shapley:  64%|██████▍   | 32/50 [38:16<19:19, 64.40s/it]  L2 pair 33/50 done (52.4s this pair, 2349.2s total, 538 unique coalitions cached)
+  L2 Shapley:  66%|██████▌   | 33/50 [39:09<17:13, 60.79s/it]  L2 pair 34/50 done (61.1s this pair, 2410.3s total, 552 unique coalitions cached)
+  L2 Shapley:  68%|██████▊   | 34/50 [40:10<16:14, 60.88s/it]  L2 pair 35/50 done (52.7s this pair, 2462.9s total, 564 unique coalitions cached)
+  L2 Shapley:  70%|███████   | 35/50 [41:02<14:36, 58.41s/it]  L2 pair 36/50 done (70.0s this pair, 2532.9s total, 580 unique coalitions cached)
+  L2 Shapley:  72%|███████▏  | 36/50 [42:12<14:26, 61.87s/it]  L2 pair 37/50 done (69.8s this pair, 2602.7s total, 596 unique coalitions cached)
+  L2 Shapley:  74%|███████▍  | 37/50 [43:22<13:55, 64.26s/it]  L2 pair 38/50 done (52.6s this pair, 2655.3s total, 608 unique coalitions cached)
+  L2 Shapley:  76%|███████▌  | 38/50 [44:15<12:09, 60.76s/it]  L2 pair 39/50 done (34.9s this pair, 2690.2s total, 616 unique coalitions cached)
+  L2 Shapley:  78%|███████▊  | 39/50 [44:50<09:43, 53.01s/it]  L2 pair 40/50 done (69.8s this pair, 2760.0s total, 632 unique coalitions cached)
+  L2 Shapley:  80%|████████  | 40/50 [46:00<09:40, 58.05s/it]  L2 pair 41/50 done (52.3s this pair, 2812.4s total, 644 unique coalitions cached)
+  L2 Shapley:  82%|████████▏ | 41/50 [46:52<08:27, 56.34s/it]  L2 pair 42/50 done (52.3s this pair, 2864.7s total, 656 unique coalitions cached)
+  L2 Shapley:  84%|████████▍ | 42/50 [47:44<07:21, 55.13s/it]  L2 pair 43/50 done (69.8s this pair, 2934.5s total, 672 unique coalitions cached)
+  L2 Shapley:  86%|████████▌ | 43/50 [48:54<06:56, 59.53s/it]  L2 pair 44/50 done (43.6s this pair, 2978.1s total, 682 unique coalitions cached)
+  L2 Shapley:  88%|████████▊ | 44/50 [49:38<05:28, 54.76s/it]  L2 pair 45/50 done (61.1s this pair, 3039.3s total, 696 unique coalitions cached)
+  L2 Shapley:  90%|█████████ | 45/50 [50:39<04:43, 56.67s/it]  L2 pair 46/50 done (52.6s this pair, 3091.9s total, 708 unique coalitions cached)
+  L2 Shapley:  92%|█████████▏| 46/50 [51:31<03:41, 55.47s/it]  L2 pair 47/50 done (52.4s this pair, 3144.3s total, 720 unique coalitions cached)
+  L2 Shapley:  94%|█████████▍| 47/50 [52:24<02:43, 54.55s/it]  L2 pair 48/50 done (69.9s this pair, 3214.2s total, 736 unique coalitions cached)
+  L2 Shapley:  96%|█████████▌| 48/50 [53:34<01:58, 59.16s/it]  L2 pair 49/50 done (70.1s this pair, 3284.3s total, 752 unique coalitions cached)
+  L2 Shapley:  98%|█████████▊| 49/50 [54:44<01:02, 62.44s/it]  L2 pair 50/50 done (52.4s this pair, 3336.8s total, 764 unique coalitions cached)
+  L2 Shapley: 100%|██████████| 50/50 [55:36<00:00, 59.43s/it]                                                               L2: 100 perms, cache size=764, hit rate=41.2%, max |phi|=0.0315
+  Layer 3: 100 permutations (50 antithetic pairs)
+  L3 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L3 pair 1/50 done (100.4s this pair, 100.4s total, 24 unique coalitions cached)
+  L3 Shapley:   2%|▏         | 1/50 [01:40<1:22:00, 100.41s/it]  L3 pair 2/50 done (96.0s this pair, 196.5s total, 46 unique coalitions cached)
+  L3 Shapley:   4%|▍         | 2/50 [03:16<1:18:16, 97.84s/it]   L3 pair 3/50 done (87.3s this pair, 283.8s total, 66 unique coalitions cached)
+  L3 Shapley:   6%|▌         | 3/50 [04:43<1:12:52, 93.03s/it]  L3 pair 4/50 done (88.0s this pair, 371.8s total, 86 unique coalitions cached)
+  L3 Shapley:   8%|▊         | 4/50 [06:11<1:09:48, 91.05s/it]  L3 pair 5/50 done (87.3s this pair, 459.2s total, 106 unique coalitions cached)
+  L3 Shapley:  10%|█         | 5/50 [07:39<1:07:18, 89.73s/it]  L3 pair 6/50 done (87.5s this pair, 546.7s total, 126 unique coalitions cached)
+  L3 Shapley:  12%|█▏        | 6/50 [09:06<1:05:14, 88.97s/it]  L3 pair 7/50 done (69.8s this pair, 616.5s total, 142 unique coalitions cached)
+  L3 Shapley:  14%|█▍        | 7/50 [10:16<59:17, 82.72s/it]    L3 pair 8/50 done (69.8s this pair, 686.4s total, 158 unique coalitions cached)
+  L3 Shapley:  16%|█▌        | 8/50 [11:26<55:02, 78.62s/it]  L3 pair 9/50 done (69.8s this pair, 756.2s total, 174 unique coalitions cached)
+  L3 Shapley:  18%|█▊        | 9/50 [12:36<51:50, 75.86s/it]  L3 pair 10/50 done (69.9s this pair, 826.0s total, 190 unique coalitions cached)
+  L3 Shapley:  20%|██        | 10/50 [13:46<49:20, 74.01s/it]  L3 pair 11/50 done (87.4s this pair, 913.4s total, 210 unique coalitions cached)
+  L3 Shapley:  22%|██▏       | 11/50 [15:13<50:46, 78.11s/it]  L3 pair 12/50 done (80.4s this pair, 993.8s total, 228 unique coalitions cached)
+  L3 Shapley:  24%|██▍       | 12/50 [16:33<49:54, 78.80s/it]  L3 pair 13/50 done (70.3s this pair, 1064.2s total, 244 unique coalitions cached)
+  L3 Shapley:  26%|██▌       | 13/50 [17:44<47:00, 76.24s/it]  L3 pair 14/50 done (79.0s this pair, 1143.1s total, 262 unique coalitions cached)
+  L3 Shapley:  28%|██▊       | 14/50 [19:03<46:14, 77.06s/it]  L3 pair 15/50 done (61.1s this pair, 1204.3s total, 276 unique coalitions cached)
+  L3 Shapley:  30%|███       | 15/50 [20:04<42:09, 72.27s/it]  L3 pair 16/50 done (78.6s this pair, 1282.9s total, 294 unique coalitions cached)
+  L3 Shapley:  32%|███▏      | 16/50 [21:22<42:01, 74.17s/it]  L3 pair 17/50 done (52.4s this pair, 1335.3s total, 306 unique coalitions cached)
+  L3 Shapley:  34%|███▍      | 17/50 [22:15<37:11, 67.63s/it]  L3 pair 18/50 done (78.8s this pair, 1414.0s total, 324 unique coalitions cached)
+  L3 Shapley:  36%|███▌      | 18/50 [23:34<37:51, 70.97s/it]  L3 pair 19/50 done (44.0s this pair, 1458.1s total, 334 unique coalitions cached)
+  L3 Shapley:  38%|███▊      | 19/50 [24:18<32:29, 62.88s/it]  L3 pair 20/50 done (44.0s this pair, 1502.1s total, 344 unique coalitions cached)
+  L3 Shapley:  40%|████      | 20/50 [25:02<28:36, 57.22s/it]  L3 pair 21/50 done (70.6s this pair, 1572.7s total, 360 unique coalitions cached)
+  L3 Shapley:  42%|████▏     | 21/50 [26:12<29:35, 61.23s/it]  L3 pair 22/50 done (79.1s this pair, 1651.9s total, 378 unique coalitions cached)
+  L3 Shapley:  44%|████▍     | 22/50 [27:31<31:05, 66.62s/it]  L3 pair 23/50 done (78.6s this pair, 1730.5s total, 396 unique coalitions cached)
+  L3 Shapley:  46%|████▌     | 23/50 [28:50<31:35, 70.21s/it]  L3 pair 24/50 done (70.2s this pair, 1800.6s total, 412 unique coalitions cached)
+  L3 Shapley:  48%|████▊     | 24/50 [30:00<30:25, 70.20s/it]  L3 pair 25/50 done (52.8s this pair, 1853.4s total, 424 unique coalitions cached)
+  L3 Shapley:  50%|█████     | 25/50 [30:53<27:04, 64.98s/it]  L3 pair 26/50 done (61.5s this pair, 1914.9s total, 438 unique coalitions cached)
+  L3 Shapley:  52%|█████▏    | 26/50 [31:54<25:34, 63.93s/it]  L3 pair 27/50 done (52.6s this pair, 1967.5s total, 450 unique coalitions cached)
+  L3 Shapley:  54%|█████▍    | 27/50 [32:47<23:11, 60.52s/it]  L3 pair 28/50 done (61.3s this pair, 2028.7s total, 464 unique coalitions cached)
+  L3 Shapley:  56%|█████▌    | 28/50 [33:48<22:16, 60.74s/it]  L3 pair 29/50 done (70.0s this pair, 2098.8s total, 480 unique coalitions cached)
+  L3 Shapley:  58%|█████▊    | 29/50 [34:58<22:13, 63.52s/it]  L3 pair 30/50 done (52.8s this pair, 2151.6s total, 492 unique coalitions cached)
+  L3 Shapley:  60%|██████    | 30/50 [35:51<20:06, 60.32s/it]  L3 pair 31/50 done (61.5s this pair, 2213.1s total, 506 unique coalitions cached)
+  L3 Shapley:  62%|██████▏   | 31/50 [36:53<19:13, 60.69s/it]  L3 pair 32/50 done (69.9s this pair, 2283.1s total, 522 unique coalitions cached)
+  L3 Shapley:  64%|██████▍   | 32/50 [38:03<19:02, 63.47s/it]  L3 pair 33/50 done (17.5s this pair, 2300.6s total, 526 unique coalitions cached)
+  L3 Shapley:  66%|██████▌   | 33/50 [38:20<14:04, 49.68s/it]  L3 pair 34/50 done (61.2s this pair, 2361.8s total, 540 unique coalitions cached)
+  L3 Shapley:  68%|██████▊   | 34/50 [39:21<14:10, 53.14s/it]  L3 pair 35/50 done (61.3s this pair, 2423.1s total, 554 unique coalitions cached)
+  L3 Shapley:  70%|███████   | 35/50 [40:23<13:53, 55.58s/it]  L3 pair 36/50 done (52.5s this pair, 2475.6s total, 566 unique coalitions cached)
+  L3 Shapley:  72%|███████▏  | 36/50 [41:15<12:45, 54.66s/it]  L3 pair 37/50 done (52.4s this pair, 2528.0s total, 578 unique coalitions cached)
+  L3 Shapley:  74%|███████▍  | 37/50 [42:07<11:41, 53.98s/it]  L3 pair 38/50 done (69.8s this pair, 2597.8s total, 594 unique coalitions cached)
+  L3 Shapley:  76%|███████▌  | 38/50 [43:17<11:44, 58.74s/it]  L3 pair 39/50 done (43.7s this pair, 2641.5s total, 604 unique coalitions cached)
+  L3 Shapley:  78%|███████▊  | 39/50 [44:01<09:56, 54.21s/it]  L3 pair 40/50 done (69.9s this pair, 2711.4s total, 620 unique coalitions cached)
+  L3 Shapley:  80%|████████  | 40/50 [45:11<09:49, 58.92s/it]  L3 pair 41/50 done (61.5s this pair, 2772.9s total, 634 unique coalitions cached)
+  L3 Shapley:  82%|████████▏ | 41/50 [46:12<08:57, 59.70s/it]  L3 pair 42/50 done (26.2s this pair, 2799.1s total, 640 unique coalitions cached)
+  L3 Shapley:  84%|████████▍ | 42/50 [46:39<06:37, 49.66s/it]  L3 pair 43/50 done (52.4s this pair, 2851.5s total, 652 unique coalitions cached)
+  L3 Shapley:  86%|████████▌ | 43/50 [47:31<05:53, 50.47s/it]  L3 pair 44/50 done (52.4s this pair, 2903.9s total, 664 unique coalitions cached)
+  L3 Shapley:  88%|████████▊ | 44/50 [48:23<05:06, 51.04s/it]  L3 pair 45/50 done (43.6s this pair, 2947.5s total, 674 unique coalitions cached)
+  L3 Shapley:  90%|█████████ | 45/50 [49:07<04:04, 48.82s/it]  L3 pair 46/50 done (61.1s this pair, 3008.7s total, 688 unique coalitions cached)
+  L3 Shapley:  92%|█████████▏| 46/50 [50:08<03:30, 52.52s/it]  L3 pair 47/50 done (61.1s this pair, 3069.8s total, 702 unique coalitions cached)
+  L3 Shapley:  94%|█████████▍| 47/50 [51:09<02:45, 55.09s/it]  L3 pair 48/50 done (52.4s this pair, 3122.2s total, 714 unique coalitions cached)
+  L3 Shapley:  96%|█████████▌| 48/50 [52:02<01:48, 54.29s/it]  L3 pair 49/50 done (43.6s this pair, 3165.8s total, 724 unique coalitions cached)
+  L3 Shapley:  98%|█████████▊| 49/50 [52:45<00:51, 51.10s/it]  L3 pair 50/50 done (61.1s this pair, 3226.9s total, 738 unique coalitions cached)
+  L3 Shapley: 100%|██████████| 50/50 [53:46<00:00, 54.10s/it]                                                               L3: 100 perms, cache size=738, hit rate=43.2%, max |phi|=0.0244
+  Layer 4: 100 permutations (50 antithetic pairs)
+  L4 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L4 pair 1/50 done (100.7s this pair, 100.7s total, 24 unique coalitions cached)
+  L4 Shapley:   2%|▏         | 1/50 [01:40<1:22:14, 100.71s/it]  L4 pair 2/50 done (97.4s this pair, 198.2s total, 46 unique coalitions cached)
+  L4 Shapley:   4%|▍         | 2/50 [03:18<1:19:01, 98.79s/it]   L4 pair 3/50 done (96.2s this pair, 294.4s total, 68 unique coalitions cached)
+  L4 Shapley:   6%|▌         | 3/50 [04:54<1:16:27, 97.61s/it]  L4 pair 4/50 done (96.2s this pair, 390.6s total, 90 unique coalitions cached)
+  L4 Shapley:   8%|▊         | 4/50 [06:30<1:14:25, 97.07s/it]  L4 pair 5/50 done (96.3s this pair, 486.8s total, 112 unique coalitions cached)
+  L4 Shapley:  10%|█         | 5/50 [08:06<1:12:34, 96.77s/it]  L4 pair 6/50 done (61.2s this pair, 548.1s total, 126 unique coalitions cached)
+  L4 Shapley:  12%|█▏        | 6/50 [09:08<1:02:06, 84.69s/it]  L4 pair 7/50 done (87.5s this pair, 635.6s total, 146 unique coalitions cached)
+  L4 Shapley:  14%|█▍        | 7/50 [10:35<1:01:20, 85.60s/it]  L4 pair 8/50 done (70.3s this pair, 705.8s total, 162 unique coalitions cached)
+  L4 Shapley:  16%|█▌        | 8/50 [11:45<56:30, 80.72s/it]    L4 pair 9/50 done (70.2s this pair, 776.0s total, 178 unique coalitions cached)
+  L4 Shapley:  18%|█▊        | 9/50 [12:56<52:54, 77.44s/it]  L4 pair 10/50 done (78.9s this pair, 854.9s total, 196 unique coalitions cached)
+  L4 Shapley:  20%|██        | 10/50 [14:14<51:55, 77.89s/it]  L4 pair 11/50 done (78.8s this pair, 933.7s total, 214 unique coalitions cached)
+  L4 Shapley:  22%|██▏       | 11/50 [15:33<50:48, 78.16s/it]  L4 pair 12/50 done (70.0s this pair, 1003.7s total, 230 unique coalitions cached)
+  L4 Shapley:  24%|██▍       | 12/50 [16:43<47:55, 75.67s/it]  L4 pair 13/50 done (70.0s this pair, 1073.7s total, 246 unique coalitions cached)
+  L4 Shapley:  26%|██▌       | 13/50 [17:53<45:36, 73.95s/it]  L4 pair 14/50 done (70.0s this pair, 1143.7s total, 262 unique coalitions cached)
+  L4 Shapley:  28%|██▊       | 14/50 [19:03<43:39, 72.75s/it]  L4 pair 15/50 done (61.2s this pair, 1204.9s total, 276 unique coalitions cached)
+  L4 Shapley:  30%|███       | 15/50 [20:04<40:24, 69.27s/it]  L4 pair 16/50 done (61.3s this pair, 1266.1s total, 290 unique coalitions cached)
+  L4 Shapley:  32%|███▏      | 16/50 [21:06<37:53, 66.86s/it]  L4 pair 17/50 done (61.9s this pair, 1328.0s total, 304 unique coalitions cached)
+  L4 Shapley:  34%|███▍      | 17/50 [22:07<35:56, 65.36s/it]  L4 pair 18/50 done (79.4s this pair, 1407.4s total, 322 unique coalitions cached)
+  L4 Shapley:  36%|███▌      | 18/50 [23:27<37:06, 69.58s/it]  L4 pair 19/50 done (78.8s this pair, 1486.2s total, 340 unique coalitions cached)
+  L4 Shapley:  38%|███▊      | 19/50 [24:46<37:23, 72.36s/it]  L4 pair 20/50 done (70.1s this pair, 1556.3s total, 356 unique coalitions cached)
+  L4 Shapley:  40%|████      | 20/50 [25:56<35:50, 71.67s/it]  L4 pair 21/50 done (61.3s this pair, 1617.6s total, 370 unique coalitions cached)
+  L4 Shapley:  42%|████▏     | 21/50 [26:57<33:07, 68.55s/it]  L4 pair 22/50 done (61.3s this pair, 1678.9s total, 384 unique coalitions cached)
+  L4 Shapley:  44%|████▍     | 22/50 [27:58<30:58, 66.37s/it]  L4 pair 23/50 done (61.7s this pair, 1740.6s total, 398 unique coalitions cached)
+  L4 Shapley:  46%|████▌     | 23/50 [29:00<29:14, 64.97s/it]  L4 pair 24/50 done (79.4s this pair, 1820.0s total, 416 unique coalitions cached)
+  L4 Shapley:  48%|████▊     | 24/50 [30:19<30:01, 69.29s/it]  L4 pair 25/50 done (61.5s this pair, 1881.4s total, 430 unique coalitions cached)
+  L4 Shapley:  50%|█████     | 25/50 [31:21<27:53, 66.95s/it]  L4 pair 26/50 done (70.4s this pair, 1951.9s total, 446 unique coalitions cached)
+  L4 Shapley:  52%|█████▏    | 26/50 [32:31<27:11, 67.99s/it]  L4 pair 27/50 done (70.6s this pair, 2022.4s total, 462 unique coalitions cached)
+  L4 Shapley:  54%|█████▍    | 27/50 [33:42<26:21, 68.76s/it]  L4 pair 28/50 done (70.0s this pair, 2092.4s total, 478 unique coalitions cached)
+  L4 Shapley:  56%|█████▌    | 28/50 [34:52<25:21, 69.14s/it]  L4 pair 29/50 done (35.0s this pair, 2127.5s total, 486 unique coalitions cached)
+  L4 Shapley:  58%|█████▊    | 29/50 [35:27<20:37, 58.91s/it]  L4 pair 30/50 done (61.8s this pair, 2189.2s total, 500 unique coalitions cached)
+  L4 Shapley:  60%|██████    | 30/50 [36:29<19:55, 59.76s/it]  L4 pair 31/50 done (35.1s this pair, 2224.4s total, 508 unique coalitions cached)
+  L4 Shapley:  62%|██████▏   | 31/50 [37:04<16:35, 52.38s/it]  L4 pair 32/50 done (70.3s this pair, 2294.7s total, 524 unique coalitions cached)
+  L4 Shapley:  64%|██████▍   | 32/50 [38:14<17:19, 57.75s/it]  L4 pair 33/50 done (52.5s this pair, 2347.1s total, 536 unique coalitions cached)
+  L4 Shapley:  66%|██████▌   | 33/50 [39:07<15:54, 56.17s/it]  L4 pair 34/50 done (69.9s this pair, 2417.0s total, 552 unique coalitions cached)
+  L4 Shapley:  68%|██████▊   | 34/50 [40:17<16:04, 60.28s/it]  L4 pair 35/50 done (61.6s this pair, 2478.6s total, 566 unique coalitions cached)
+  L4 Shapley:  70%|███████   | 35/50 [41:18<15:10, 60.68s/it]  L4 pair 36/50 done (53.0s this pair, 2531.6s total, 578 unique coalitions cached)
+  L4 Shapley:  72%|███████▏  | 36/50 [42:11<13:37, 58.38s/it]  L4 pair 37/50 done (62.5s this pair, 2594.1s total, 592 unique coalitions cached)
+  L4 Shapley:  74%|███████▍  | 37/50 [43:14<12:54, 59.61s/it]  L4 pair 38/50 done (43.8s this pair, 2637.9s total, 602 unique coalitions cached)
+  L4 Shapley:  76%|███████▌  | 38/50 [43:57<10:58, 54.87s/it]  L4 pair 39/50 done (61.2s this pair, 2699.1s total, 616 unique coalitions cached)
+  L4 Shapley:  78%|███████▊  | 39/50 [44:59<10:24, 56.77s/it]  L4 pair 40/50 done (70.1s this pair, 2769.2s total, 632 unique coalitions cached)
+  L4 Shapley:  80%|████████  | 40/50 [46:09<10:07, 60.77s/it]  L4 pair 41/50 done (61.2s this pair, 2830.5s total, 646 unique coalitions cached)
+  L4 Shapley:  82%|████████▏ | 41/50 [47:10<09:08, 60.91s/it]  L4 pair 42/50 done (52.5s this pair, 2882.9s total, 658 unique coalitions cached)
+  L4 Shapley:  84%|████████▍ | 42/50 [48:02<07:46, 58.37s/it]  L4 pair 43/50 done (52.5s this pair, 2935.4s total, 670 unique coalitions cached)
+  L4 Shapley:  86%|████████▌ | 43/50 [48:55<06:36, 56.60s/it]  L4 pair 44/50 done (52.5s this pair, 2987.9s total, 682 unique coalitions cached)
+  L4 Shapley:  88%|████████▊ | 44/50 [49:47<05:32, 55.37s/it]  L4 pair 45/50 done (34.9s this pair, 3022.8s total, 690 unique coalitions cached)
+  L4 Shapley:  90%|█████████ | 45/50 [50:22<04:06, 49.24s/it]  L4 pair 46/50 done (43.6s this pair, 3066.5s total, 700 unique coalitions cached)
+  L4 Shapley:  92%|█████████▏| 46/50 [51:06<03:10, 47.56s/it]  L4 pair 47/50 done (61.2s this pair, 3127.7s total, 714 unique coalitions cached)
+  L4 Shapley:  94%|█████████▍| 47/50 [52:07<02:34, 51.65s/it]  L4 pair 48/50 done (43.8s this pair, 3171.5s total, 724 unique coalitions cached)
+  L4 Shapley:  96%|█████████▌| 48/50 [52:51<01:38, 49.31s/it]  L4 pair 49/50 done (52.5s this pair, 3224.0s total, 736 unique coalitions cached)
+  L4 Shapley:  98%|█████████▊| 49/50 [53:43<00:50, 50.26s/it]  L4 pair 50/50 done (52.4s this pair, 3276.4s total, 748 unique coalitions cached)
+  L4 Shapley: 100%|██████████| 50/50 [54:36<00:00, 50.90s/it]                                                               L4: 100 perms, cache size=748, hit rate=42.5%, max |phi|=0.0257
+  Layer 5: 100 permutations (50 antithetic pairs)
+  L5 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L5 pair 1/50 done (100.4s this pair, 100.4s total, 24 unique coalitions cached)
+  L5 Shapley:   2%|▏         | 1/50 [01:40<1:22:00, 100.43s/it]  L5 pair 2/50 done (87.4s this pair, 187.8s total, 44 unique coalitions cached)
+  L5 Shapley:   4%|▍         | 2/50 [03:07<1:14:12, 92.76s/it]   L5 pair 3/50 done (87.4s this pair, 275.2s total, 64 unique coalitions cached)
+  L5 Shapley:   6%|▌         | 3/50 [04:35<1:10:43, 90.30s/it]  L5 pair 4/50 done (78.6s this pair, 353.8s total, 82 unique coalitions cached)
+  L5 Shapley:   8%|▊         | 4/50 [05:53<1:05:40, 85.66s/it]  L5 pair 5/50 done (87.5s this pair, 441.2s total, 102 unique coalitions cached)
+  L5 Shapley:  10%|█         | 5/50 [07:21<1:04:44, 86.31s/it]  L5 pair 6/50 done (87.6s this pair, 528.8s total, 122 unique coalitions cached)
+  L5 Shapley:  12%|█▏        | 6/50 [08:48<1:03:37, 86.76s/it]  L5 pair 7/50 done (87.4s this pair, 616.2s total, 142 unique coalitions cached)
+  L5 Shapley:  14%|█▍        | 7/50 [10:16<1:02:19, 86.97s/it]  L5 pair 8/50 done (87.3s this pair, 703.5s total, 162 unique coalitions cached)
+  L5 Shapley:  16%|█▌        | 8/50 [11:43<1:00:57, 87.08s/it]  L5 pair 9/50 done (70.3s this pair, 773.8s total, 178 unique coalitions cached)
+  L5 Shapley:  18%|█▊        | 9/50 [12:53<55:55, 81.84s/it]    L5 pair 10/50 done (69.8s this pair, 843.7s total, 194 unique coalitions cached)
+  L5 Shapley:  20%|██        | 10/50 [14:03<52:05, 78.13s/it]  L5 pair 11/50 done (61.1s this pair, 904.8s total, 208 unique coalitions cached)
+  L5 Shapley:  22%|██▏       | 11/50 [15:04<47:24, 72.93s/it]  L5 pair 12/50 done (87.4s this pair, 992.2s total, 228 unique coalitions cached)
+  L5 Shapley:  24%|██▍       | 12/50 [16:32<48:58, 77.33s/it]  L5 pair 13/50 done (70.1s this pair, 1062.3s total, 244 unique coalitions cached)
+  L5 Shapley:  26%|██▌       | 13/50 [17:42<46:19, 75.13s/it]  L5 pair 14/50 done (79.1s this pair, 1141.3s total, 262 unique coalitions cached)
+  L5 Shapley:  28%|██▊       | 14/50 [19:01<45:47, 76.31s/it]  L5 pair 15/50 done (69.9s this pair, 1211.3s total, 278 unique coalitions cached)
+  L5 Shapley:  30%|███       | 15/50 [20:11<43:23, 74.39s/it]  L5 pair 16/50 done (52.9s this pair, 1264.2s total, 290 unique coalitions cached)
+  L5 Shapley:  32%|███▏      | 16/50 [21:04<38:29, 67.91s/it]  L5 pair 17/50 done (79.4s this pair, 1343.6s total, 308 unique coalitions cached)
+  L5 Shapley:  34%|███▍      | 17/50 [22:23<39:15, 71.38s/it]  L5 pair 18/50 done (87.7s this pair, 1431.3s total, 328 unique coalitions cached)
+  L5 Shapley:  36%|███▌      | 18/50 [23:51<40:40, 76.28s/it]  L5 pair 19/50 done (61.5s this pair, 1492.8s total, 342 unique coalitions cached)
+  L5 Shapley:  38%|███▊      | 19/50 [24:52<37:07, 71.84s/it]  L5 pair 20/50 done (69.9s this pair, 1562.7s total, 358 unique coalitions cached)
+  L5 Shapley:  40%|████      | 20/50 [26:02<35:37, 71.26s/it]  L5 pair 21/50 done (61.5s this pair, 1624.2s total, 372 unique coalitions cached)
+  L5 Shapley:  42%|████▏     | 21/50 [27:04<33:01, 68.34s/it]  L5 pair 22/50 done (70.6s this pair, 1694.9s total, 388 unique coalitions cached)
+  L5 Shapley:  44%|████▍     | 22/50 [28:14<32:12, 69.03s/it]  L5 pair 23/50 done (70.5s this pair, 1765.4s total, 404 unique coalitions cached)
+  L5 Shapley:  46%|████▌     | 23/50 [29:25<31:15, 69.47s/it]  L5 pair 24/50 done (70.0s this pair, 1835.4s total, 420 unique coalitions cached)
+  L5 Shapley:  48%|████▊     | 24/50 [30:35<30:10, 69.65s/it]  L5 pair 25/50 done (69.9s this pair, 1905.3s total, 436 unique coalitions cached)
+  L5 Shapley:  50%|█████     | 25/50 [31:45<29:02, 69.72s/it]  L5 pair 26/50 done (61.1s this pair, 1966.4s total, 450 unique coalitions cached)
+  L5 Shapley:  52%|█████▏    | 26/50 [32:46<26:51, 67.14s/it]  L5 pair 27/50 done (61.2s this pair, 2027.6s total, 464 unique coalitions cached)
+  L5 Shapley:  54%|█████▍    | 27/50 [33:47<25:02, 65.35s/it]  L5 pair 28/50 done (78.6s this pair, 2106.2s total, 482 unique coalitions cached)
+  L5 Shapley:  56%|█████▌    | 28/50 [35:06<25:25, 69.33s/it]  L5 pair 29/50 done (69.9s this pair, 2176.1s total, 498 unique coalitions cached)
+  L5 Shapley:  58%|█████▊    | 29/50 [36:16<24:19, 69.49s/it]  L5 pair 30/50 done (61.6s this pair, 2237.6s total, 512 unique coalitions cached)
+  L5 Shapley:  60%|██████    | 30/50 [37:17<22:22, 67.11s/it]  L5 pair 31/50 done (70.9s this pair, 2308.5s total, 528 unique coalitions cached)
+  L5 Shapley:  62%|██████▏   | 31/50 [38:28<21:36, 68.24s/it]  L5 pair 32/50 done (69.9s this pair, 2378.4s total, 544 unique coalitions cached)
+  L5 Shapley:  64%|██████▍   | 32/50 [39:38<20:37, 68.74s/it]  L5 pair 33/50 done (61.1s this pair, 2439.6s total, 558 unique coalitions cached)
+  L5 Shapley:  66%|██████▌   | 33/50 [40:39<18:49, 66.46s/it]  L5 pair 34/50 done (61.2s this pair, 2500.7s total, 572 unique coalitions cached)
+  L5 Shapley:  68%|██████▊   | 34/50 [41:40<17:17, 64.87s/it]  L5 pair 35/50 done (52.4s this pair, 2553.2s total, 584 unique coalitions cached)
+  L5 Shapley:  70%|███████   | 35/50 [42:33<15:17, 61.14s/it]  L5 pair 36/50 done (34.9s this pair, 2588.1s total, 592 unique coalitions cached)
+  L5 Shapley:  72%|███████▏  | 36/50 [43:08<12:25, 53.27s/it]  L5 pair 37/50 done (69.9s this pair, 2657.9s total, 608 unique coalitions cached)
+  L5 Shapley:  74%|███████▍  | 37/50 [44:17<12:37, 58.25s/it]  L5 pair 38/50 done (61.1s this pair, 2719.1s total, 622 unique coalitions cached)
+  L5 Shapley:  76%|███████▌  | 38/50 [45:19<11:49, 59.11s/it]  L5 pair 39/50 done (61.1s this pair, 2780.2s total, 636 unique coalitions cached)
+  L5 Shapley:  78%|███████▊  | 39/50 [46:20<10:56, 59.71s/it]  L5 pair 40/50 done (26.3s this pair, 2806.5s total, 642 unique coalitions cached)
+  L5 Shapley:  80%|████████  | 40/50 [46:46<08:16, 49.69s/it]  L5 pair 41/50 done (43.8s this pair, 2850.3s total, 652 unique coalitions cached)
+  L5 Shapley:  82%|████████▏ | 41/50 [47:30<07:11, 47.92s/it]  L5 pair 42/50 done (70.1s this pair, 2920.3s total, 668 unique coalitions cached)
+  L5 Shapley:  84%|████████▍ | 42/50 [48:40<07:16, 54.56s/it]  L5 pair 43/50 done (52.6s this pair, 2973.0s total, 680 unique coalitions cached)
+  L5 Shapley:  86%|████████▌ | 43/50 [49:32<06:17, 53.99s/it]  L5 pair 44/50 done (43.6s this pair, 3016.6s total, 690 unique coalitions cached)
+  L5 Shapley:  88%|████████▊ | 44/50 [50:16<05:05, 50.89s/it]  L5 pair 45/50 done (43.9s this pair, 3060.6s total, 700 unique coalitions cached)
+  L5 Shapley:  90%|█████████ | 45/50 [51:00<04:04, 48.82s/it]  L5 pair 46/50 done (78.6s this pair, 3139.2s total, 718 unique coalitions cached)
+  L5 Shapley:  92%|█████████▏| 46/50 [52:19<03:51, 57.75s/it]  L5 pair 47/50 done (52.4s this pair, 3191.6s total, 730 unique coalitions cached)
+  L5 Shapley:  94%|█████████▍| 47/50 [53:11<02:48, 56.14s/it]  L5 pair 48/50 done (52.4s this pair, 3244.0s total, 742 unique coalitions cached)
+  L5 Shapley:  96%|█████████▌| 48/50 [54:04<01:50, 55.02s/it]  L5 pair 49/50 done (26.2s this pair, 3270.2s total, 748 unique coalitions cached)
+  L5 Shapley:  98%|█████████▊| 49/50 [54:30<00:46, 46.37s/it]  L5 pair 50/50 done (26.2s this pair, 3296.4s total, 754 unique coalitions cached)
+  L5 Shapley: 100%|██████████| 50/50 [54:56<00:00, 40.32s/it]                                                               L5: 100 perms, cache size=754, hit rate=42.0%, max |phi|=0.0311
+  Layer 6: 100 permutations (50 antithetic pairs)
+  L6 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L6 pair 1/50 done (100.5s this pair, 100.6s total, 24 unique coalitions cached)
+  L6 Shapley:   2%|▏         | 1/50 [01:40<1:22:06, 100.55s/it]  L6 pair 2/50 done (96.3s this pair, 196.9s total, 46 unique coalitions cached)
+  L6 Shapley:   4%|▍         | 2/50 [03:16<1:18:27, 98.07s/it]   L6 pair 3/50 done (79.4s this pair, 276.3s total, 64 unique coalitions cached)
+  L6 Shapley:   6%|▌         | 3/50 [04:36<1:10:08, 89.54s/it]  L6 pair 4/50 done (87.7s this pair, 364.0s total, 84 unique coalitions cached)
+  L6 Shapley:   8%|▊         | 4/50 [06:04<1:08:05, 88.83s/it]  L6 pair 5/50 done (78.7s this pair, 442.8s total, 102 unique coalitions cached)
+  L6 Shapley:  10%|█         | 5/50 [07:22<1:03:53, 85.19s/it]  L6 pair 6/50 done (78.8s this pair, 521.5s total, 120 unique coalitions cached)
+  L6 Shapley:  12%|█▏        | 6/50 [08:41<1:00:52, 83.00s/it]  L6 pair 7/50 done (96.2s this pair, 617.8s total, 142 unique coalitions cached)
+  L6 Shapley:  14%|█▍        | 7/50 [10:17<1:02:35, 87.33s/it]  L6 pair 8/50 done (69.9s this pair, 687.7s total, 158 unique coalitions cached)
+  L6 Shapley:  16%|█▌        | 8/50 [11:27<57:15, 81.80s/it]    L6 pair 9/50 done (78.8s this pair, 766.5s total, 176 unique coalitions cached)
+  L6 Shapley:  18%|█▊        | 9/50 [12:46<55:15, 80.87s/it]  L6 pair 10/50 done (87.9s this pair, 854.5s total, 196 unique coalitions cached)
+  L6 Shapley:  20%|██        | 10/50 [14:14<55:21, 83.05s/it]  L6 pair 11/50 done (70.5s this pair, 925.0s total, 212 unique coalitions cached)
+  L6 Shapley:  22%|██▏       | 11/50 [15:24<51:29, 79.22s/it]  L6 pair 12/50 done (79.1s this pair, 1004.1s total, 230 unique coalitions cached)
+  L6 Shapley:  24%|██▍       | 12/50 [16:44<50:08, 79.17s/it]  L6 pair 13/50 done (78.9s this pair, 1083.0s total, 248 unique coalitions cached)
+  L6 Shapley:  26%|██▌       | 13/50 [18:02<48:46, 79.10s/it]  L6 pair 14/50 done (78.6s this pair, 1161.6s total, 266 unique coalitions cached)
+  L6 Shapley:  28%|██▊       | 14/50 [19:21<47:21, 78.93s/it]  L6 pair 15/50 done (70.2s this pair, 1231.7s total, 282 unique coalitions cached)
+  L6 Shapley:  30%|███       | 15/50 [20:31<44:30, 76.29s/it]  L6 pair 16/50 done (70.5s this pair, 1302.2s total, 298 unique coalitions cached)
+  L6 Shapley:  32%|███▏      | 16/50 [21:42<42:14, 74.54s/it]  L6 pair 17/50 done (70.3s this pair, 1372.4s total, 314 unique coalitions cached)
+  L6 Shapley:  34%|███▍      | 17/50 [22:52<40:17, 73.25s/it]  L6 pair 18/50 done (62.2s this pair, 1434.7s total, 328 unique coalitions cached)
+  L6 Shapley:  36%|███▌      | 18/50 [23:54<37:18, 69.94s/it]  L6 pair 19/50 done (78.9s this pair, 1513.6s total, 346 unique coalitions cached)
+  L6 Shapley:  38%|███▊      | 19/50 [25:13<37:32, 72.65s/it]  L6 pair 20/50 done (78.5s this pair, 1592.2s total, 364 unique coalitions cached)
+  L6 Shapley:  40%|████      | 20/50 [26:32<37:12, 74.43s/it]  L6 pair 21/50 done (69.9s this pair, 1662.1s total, 380 unique coalitions cached)
+  L6 Shapley:  42%|████▏     | 21/50 [27:42<35:18, 73.05s/it]  L6 pair 22/50 done (26.2s this pair, 1688.3s total, 386 unique coalitions cached)
+  L6 Shapley:  44%|████▍     | 22/50 [28:08<27:31, 58.99s/it]  L6 pair 23/50 done (61.1s this pair, 1749.3s total, 400 unique coalitions cached)
+  L6 Shapley:  46%|████▌     | 23/50 [29:09<26:49, 59.62s/it]  L6 pair 24/50 done (69.8s this pair, 1819.2s total, 416 unique coalitions cached)
+  L6 Shapley:  48%|████▊     | 24/50 [30:19<27:09, 62.68s/it]  L6 pair 25/50 done (69.8s this pair, 1889.0s total, 432 unique coalitions cached)
+  L6 Shapley:  50%|█████     | 25/50 [31:28<27:00, 64.83s/it]  L6 pair 26/50 done (52.4s this pair, 1941.4s total, 444 unique coalitions cached)
+  L6 Shapley:  52%|█████▏    | 26/50 [32:21<24:26, 61.10s/it]  L6 pair 27/50 done (61.2s this pair, 2002.6s total, 458 unique coalitions cached)
+  L6 Shapley:  54%|█████▍    | 27/50 [33:22<23:26, 61.14s/it]  L6 pair 28/50 done (52.7s this pair, 2055.4s total, 470 unique coalitions cached)
+  L6 Shapley:  56%|█████▌    | 28/50 [34:15<21:29, 58.61s/it]  L6 pair 29/50 done (61.3s this pair, 2116.6s total, 484 unique coalitions cached)
+  L6 Shapley:  58%|█████▊    | 29/50 [35:16<20:47, 59.41s/it]  L6 pair 30/50 done (69.9s this pair, 2186.5s total, 500 unique coalitions cached)
+  L6 Shapley:  60%|██████    | 30/50 [36:26<20:50, 62.55s/it]  L6 pair 31/50 done (52.4s this pair, 2238.9s total, 512 unique coalitions cached)
+  L6 Shapley:  62%|██████▏   | 31/50 [37:18<18:50, 59.49s/it]  L6 pair 32/50 done (70.1s this pair, 2308.9s total, 528 unique coalitions cached)
+  L6 Shapley:  64%|██████▍   | 32/50 [38:28<18:48, 62.67s/it]  L6 pair 33/50 done (52.4s this pair, 2361.3s total, 540 unique coalitions cached)
+  L6 Shapley:  66%|██████▌   | 33/50 [39:21<16:52, 59.58s/it]  L6 pair 34/50 done (61.1s this pair, 2422.4s total, 554 unique coalitions cached)
+  L6 Shapley:  68%|██████▊   | 34/50 [40:22<16:00, 60.04s/it]  L6 pair 35/50 done (34.9s this pair, 2457.3s total, 562 unique coalitions cached)
+  L6 Shapley:  70%|███████   | 35/50 [40:57<13:07, 52.50s/it]  L6 pair 36/50 done (69.8s this pair, 2527.1s total, 578 unique coalitions cached)
+  L6 Shapley:  72%|███████▏  | 36/50 [42:07<13:27, 57.69s/it]  L6 pair 37/50 done (70.0s this pair, 2597.1s total, 594 unique coalitions cached)
+  L6 Shapley:  74%|███████▍  | 37/50 [43:17<13:17, 61.38s/it]  L6 pair 38/50 done (34.9s this pair, 2632.1s total, 602 unique coalitions cached)
+  L6 Shapley:  76%|███████▌  | 38/50 [43:52<10:41, 53.45s/it]  L6 pair 39/50 done (61.9s this pair, 2693.9s total, 616 unique coalitions cached)
+  L6 Shapley:  78%|███████▊  | 39/50 [44:53<10:15, 55.98s/it]  L6 pair 40/50 done (61.1s this pair, 2755.1s total, 630 unique coalitions cached)
+  L6 Shapley:  80%|████████  | 40/50 [45:55<09:35, 57.53s/it]  L6 pair 41/50 done (69.8s this pair, 2824.9s total, 646 unique coalitions cached)
+  L6 Shapley:  82%|████████▏ | 41/50 [47:04<09:10, 61.20s/it]  L6 pair 42/50 done (61.1s this pair, 2886.0s total, 660 unique coalitions cached)
+  L6 Shapley:  84%|████████▍ | 42/50 [48:05<08:09, 61.18s/it]  L6 pair 43/50 done (43.6s this pair, 2929.6s total, 670 unique coalitions cached)
+  L6 Shapley:  86%|████████▌ | 43/50 [48:49<06:31, 55.91s/it]  L6 pair 44/50 done (34.9s this pair, 2964.5s total, 678 unique coalitions cached)
+  L6 Shapley:  88%|████████▊ | 44/50 [49:24<04:57, 49.60s/it]  L6 pair 45/50 done (34.9s this pair, 2999.4s total, 686 unique coalitions cached)
+  L6 Shapley:  90%|█████████ | 45/50 [49:59<03:45, 45.19s/it]  L6 pair 46/50 done (52.4s this pair, 3051.8s total, 698 unique coalitions cached)
+  L6 Shapley:  92%|█████████▏| 46/50 [50:51<03:09, 47.34s/it]  L6 pair 47/50 done (43.6s this pair, 3095.4s total, 708 unique coalitions cached)
+  L6 Shapley:  94%|█████████▍| 47/50 [51:35<02:18, 46.23s/it]  L6 pair 48/50 done (43.6s this pair, 3139.0s total, 718 unique coalitions cached)
+  L6 Shapley:  96%|█████████▌| 48/50 [52:19<01:30, 45.45s/it]  L6 pair 49/50 done (35.1s this pair, 3174.1s total, 726 unique coalitions cached)
+  L6 Shapley:  98%|█████████▊| 49/50 [52:54<00:42, 42.34s/it]  L6 pair 50/50 done (61.1s this pair, 3235.2s total, 740 unique coalitions cached)
+  L6 Shapley: 100%|██████████| 50/50 [53:55<00:00, 47.98s/it]                                                               L6: 100 perms, cache size=740, hit rate=43.1%, max |phi|=0.0387
+  Layer 7: 100 permutations (50 antithetic pairs)
+  L7 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L7 pair 1/50 done (101.5s this pair, 101.5s total, 24 unique coalitions cached)
+  L7 Shapley:   2%|▏         | 1/50 [01:41<1:22:54, 101.51s/it]  L7 pair 2/50 done (96.7s this pair, 198.2s total, 46 unique coalitions cached)
+  L7 Shapley:   4%|▍         | 2/50 [03:18<1:18:56, 98.68s/it]   L7 pair 3/50 done (87.8s this pair, 286.1s total, 66 unique coalitions cached)
+  L7 Shapley:   6%|▌         | 3/50 [04:46<1:13:25, 93.74s/it]  L7 pair 4/50 done (87.4s this pair, 373.4s total, 86 unique coalitions cached)
+  L7 Shapley:   8%|▊         | 4/50 [06:13<1:09:56, 91.22s/it]  L7 pair 5/50 done (87.7s this pair, 461.1s total, 106 unique coalitions cached)
+  L7 Shapley:  10%|█         | 5/50 [07:41<1:07:27, 89.95s/it]  L7 pair 6/50 done (87.8s this pair, 548.9s total, 126 unique coalitions cached)
+  L7 Shapley:  12%|█▏        | 6/50 [09:08<1:05:25, 89.22s/it]  L7 pair 7/50 done (69.8s this pair, 618.8s total, 142 unique coalitions cached)
+  L7 Shapley:  14%|█▍        | 7/50 [10:18<59:23, 82.88s/it]    L7 pair 8/50 done (78.9s this pair, 697.7s total, 160 unique coalitions cached)
+  L7 Shapley:  16%|█▌        | 8/50 [11:37<57:08, 81.63s/it]  L7 pair 9/50 done (69.9s this pair, 767.6s total, 176 unique coalitions cached)
+  L7 Shapley:  18%|█▊        | 9/50 [12:47<53:16, 77.95s/it]  L7 pair 10/50 done (69.9s this pair, 837.5s total, 192 unique coalitions cached)
+  L7 Shapley:  20%|██        | 10/50 [13:57<50:18, 75.47s/it]  L7 pair 11/50 done (87.3s this pair, 924.8s total, 212 unique coalitions cached)
+  L7 Shapley:  22%|██▏       | 11/50 [15:24<51:24, 79.10s/it]  L7 pair 12/50 done (96.1s this pair, 1020.9s total, 234 unique coalitions cached)
+  L7 Shapley:  24%|██▍       | 12/50 [17:00<53:21, 84.26s/it]  L7 pair 13/50 done (69.8s this pair, 1090.7s total, 250 unique coalitions cached)
+  L7 Shapley:  26%|██▌       | 13/50 [18:10<49:15, 79.88s/it]  L7 pair 14/50 done (78.7s this pair, 1169.4s total, 268 unique coalitions cached)
+  L7 Shapley:  28%|██▊       | 14/50 [19:29<47:42, 79.53s/it]  L7 pair 15/50 done (78.7s this pair, 1248.1s total, 286 unique coalitions cached)
+  L7 Shapley:  30%|███       | 15/50 [20:48<46:14, 79.27s/it]  L7 pair 16/50 done (52.6s this pair, 1300.7s total, 298 unique coalitions cached)
+  L7 Shapley:  32%|███▏      | 16/50 [21:40<40:22, 71.24s/it]  L7 pair 17/50 done (69.9s this pair, 1370.5s total, 314 unique coalitions cached)
+  L7 Shapley:  34%|███▍      | 17/50 [22:50<38:57, 70.83s/it]  L7 pair 18/50 done (78.8s this pair, 1449.4s total, 332 unique coalitions cached)
+  L7 Shapley:  36%|███▌      | 18/50 [24:09<39:03, 73.24s/it]  L7 pair 19/50 done (61.1s this pair, 1510.5s total, 346 unique coalitions cached)
+  L7 Shapley:  38%|███▊      | 19/50 [25:10<35:57, 69.60s/it]  L7 pair 20/50 done (69.9s this pair, 1580.4s total, 362 unique coalitions cached)
+  L7 Shapley:  40%|████      | 20/50 [26:20<34:50, 69.68s/it]  L7 pair 21/50 done (69.8s this pair, 1650.2s total, 378 unique coalitions cached)
+  L7 Shapley:  42%|████▏     | 21/50 [27:30<33:42, 69.73s/it]  L7 pair 22/50 done (69.9s this pair, 1720.1s total, 394 unique coalitions cached)
+  L7 Shapley:  44%|████▍     | 22/50 [28:40<32:33, 69.77s/it]  L7 pair 23/50 done (52.6s this pair, 1772.7s total, 406 unique coalitions cached)
+  L7 Shapley:  46%|████▌     | 23/50 [29:32<29:04, 64.61s/it]  L7 pair 24/50 done (52.5s this pair, 1825.1s total, 418 unique coalitions cached)
+  L7 Shapley:  48%|████▊     | 24/50 [30:25<26:25, 60.97s/it]  L7 pair 25/50 done (52.5s this pair, 1877.6s total, 430 unique coalitions cached)
+  L7 Shapley:  50%|█████     | 25/50 [31:17<24:20, 58.42s/it]  L7 pair 26/50 done (62.3s this pair, 1939.9s total, 444 unique coalitions cached)
+  L7 Shapley:  52%|█████▏    | 26/50 [32:19<23:50, 59.59s/it]  L7 pair 27/50 done (69.9s this pair, 2009.8s total, 460 unique coalitions cached)
+  L7 Shapley:  54%|█████▍    | 27/50 [33:29<24:01, 62.67s/it]  L7 pair 28/50 done (69.9s this pair, 2079.7s total, 476 unique coalitions cached)
+  L7 Shapley:  56%|█████▌    | 28/50 [34:39<23:46, 64.83s/it]  L7 pair 29/50 done (43.7s this pair, 2123.3s total, 486 unique coalitions cached)
+  L7 Shapley:  58%|█████▊    | 29/50 [35:23<20:28, 58.48s/it]  L7 pair 30/50 done (61.1s this pair, 2184.4s total, 500 unique coalitions cached)
+  L7 Shapley:  60%|██████    | 30/50 [36:24<19:45, 59.27s/it]  L7 pair 31/50 done (61.1s this pair, 2245.5s total, 514 unique coalitions cached)
+  L7 Shapley:  62%|██████▏   | 31/50 [37:25<18:56, 59.82s/it]  L7 pair 32/50 done (52.4s this pair, 2297.9s total, 526 unique coalitions cached)
+  L7 Shapley:  64%|██████▍   | 32/50 [38:17<17:16, 57.58s/it]  L7 pair 33/50 done (61.3s this pair, 2359.2s total, 540 unique coalitions cached)
+  L7 Shapley:  66%|██████▌   | 33/50 [39:19<16:38, 58.71s/it]  L7 pair 34/50 done (61.1s this pair, 2420.4s total, 554 unique coalitions cached)
+  L7 Shapley:  68%|██████▊   | 34/50 [40:20<15:50, 59.43s/it]  L7 pair 35/50 done (61.2s this pair, 2481.5s total, 568 unique coalitions cached)
+  L7 Shapley:  70%|███████   | 35/50 [41:21<14:59, 59.96s/it]  L7 pair 36/50 done (61.4s this pair, 2543.0s total, 582 unique coalitions cached)
+  L7 Shapley:  72%|███████▏  | 36/50 [42:22<14:05, 60.41s/it]  L7 pair 37/50 done (52.3s this pair, 2595.4s total, 594 unique coalitions cached)
+  L7 Shapley:  74%|███████▍  | 37/50 [43:15<12:33, 57.99s/it]  L7 pair 38/50 done (69.9s this pair, 2665.3s total, 610 unique coalitions cached)
+  L7 Shapley:  76%|███████▌  | 38/50 [44:25<12:18, 61.57s/it]  L7 pair 39/50 done (52.6s this pair, 2717.8s total, 622 unique coalitions cached)
+  L7 Shapley:  78%|███████▊  | 39/50 [45:17<10:47, 58.86s/it]  L7 pair 40/50 done (52.9s this pair, 2770.7s total, 634 unique coalitions cached)
+  L7 Shapley:  80%|████████  | 40/50 [46:10<09:30, 57.09s/it]  L7 pair 41/50 done (62.0s this pair, 2832.7s total, 648 unique coalitions cached)
+  L7 Shapley:  82%|████████▏ | 41/50 [47:12<08:46, 58.55s/it]  L7 pair 42/50 done (52.5s this pair, 2885.3s total, 660 unique coalitions cached)
+  L7 Shapley:  84%|████████▍ | 42/50 [48:05<07:34, 56.75s/it]  L7 pair 43/50 done (35.1s this pair, 2920.4s total, 668 unique coalitions cached)
+  L7 Shapley:  86%|████████▌ | 43/50 [48:40<05:51, 50.25s/it]  L7 pair 44/50 done (52.6s this pair, 2973.0s total, 680 unique coalitions cached)
+  L7 Shapley:  88%|████████▊ | 44/50 [49:32<05:05, 50.97s/it]  L7 pair 45/50 done (34.9s this pair, 3007.9s total, 688 unique coalitions cached)
+  L7 Shapley:  90%|█████████ | 45/50 [50:07<03:50, 46.16s/it]  L7 pair 46/50 done (52.5s this pair, 3060.5s total, 700 unique coalitions cached)
+  L7 Shapley:  92%|█████████▏| 46/50 [51:00<03:12, 48.07s/it]  L7 pair 47/50 done (52.5s this pair, 3113.0s total, 712 unique coalitions cached)
+  L7 Shapley:  94%|█████████▍| 47/50 [51:52<02:28, 49.41s/it]  L7 pair 48/50 done (52.5s this pair, 3165.5s total, 724 unique coalitions cached)
+  L7 Shapley:  96%|█████████▌| 48/50 [52:45<01:40, 50.32s/it]  L7 pair 49/50 done (43.9s this pair, 3209.3s total, 734 unique coalitions cached)
+  L7 Shapley:  98%|█████████▊| 49/50 [53:29<00:48, 48.39s/it]  L7 pair 50/50 done (70.5s this pair, 3279.8s total, 750 unique coalitions cached)
+  L7 Shapley: 100%|██████████| 50/50 [54:39<00:00, 55.02s/it]                                                               L7: 100 perms, cache size=750, hit rate=42.3%, max |phi|=0.0200
+  Layer 8: 100 permutations (50 antithetic pairs)
+  L8 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L8 pair 1/50 done (101.0s this pair, 101.0s total, 24 unique coalitions cached)
+  L8 Shapley:   2%|▏         | 1/50 [01:41<1:22:29, 101.00s/it]  L8 pair 2/50 done (96.4s this pair, 197.4s total, 46 unique coalitions cached)
+  L8 Shapley:   4%|▍         | 2/50 [03:17<1:18:38, 98.30s/it]   L8 pair 3/50 done (88.0s this pair, 285.4s total, 66 unique coalitions cached)
+  L8 Shapley:   6%|▌         | 3/50 [04:45<1:13:19, 93.61s/it]  L8 pair 4/50 done (89.1s this pair, 374.5s total, 86 unique coalitions cached)
+  L8 Shapley:   8%|▊         | 4/50 [06:14<1:10:23, 91.81s/it]  L8 pair 5/50 done (79.4s this pair, 454.0s total, 104 unique coalitions cached)
+  L8 Shapley:  10%|█         | 5/50 [07:33<1:05:31, 87.36s/it]  L8 pair 6/50 done (78.9s this pair, 532.8s total, 122 unique coalitions cached)
+  L8 Shapley:  12%|█▏        | 6/50 [08:52<1:01:56, 84.47s/it]  L8 pair 7/50 done (96.4s this pair, 629.2s total, 144 unique coalitions cached)
+  L8 Shapley:  14%|█▍        | 7/50 [10:29<1:03:19, 88.37s/it]  L8 pair 8/50 done (70.1s this pair, 699.3s total, 160 unique coalitions cached)
+  L8 Shapley:  16%|█▌        | 8/50 [11:39<57:46, 82.54s/it]    L8 pair 9/50 done (79.0s this pair, 778.3s total, 178 unique coalitions cached)
+  L8 Shapley:  18%|█▊        | 9/50 [12:58<55:38, 81.43s/it]  L8 pair 10/50 done (78.8s this pair, 857.0s total, 196 unique coalitions cached)
+  L8 Shapley:  20%|██        | 10/50 [14:17<53:44, 80.61s/it]  L8 pair 11/50 done (78.7s this pair, 935.7s total, 214 unique coalitions cached)
+  L8 Shapley:  22%|██▏       | 11/50 [15:35<52:00, 80.02s/it]  L8 pair 12/50 done (61.3s this pair, 997.1s total, 228 unique coalitions cached)
+  L8 Shapley:  24%|██▍       | 12/50 [16:37<47:04, 74.33s/it]  L8 pair 13/50 done (70.0s this pair, 1067.1s total, 244 unique coalitions cached)
+  L8 Shapley:  26%|██▌       | 13/50 [17:47<45:01, 73.02s/it]  L8 pair 14/50 done (78.7s this pair, 1145.8s total, 262 unique coalitions cached)
+  L8 Shapley:  28%|██▊       | 14/50 [19:05<44:50, 74.74s/it]  L8 pair 15/50 done (79.0s this pair, 1224.7s total, 280 unique coalitions cached)
+  L8 Shapley:  30%|███       | 15/50 [20:24<44:20, 76.01s/it]  L8 pair 16/50 done (79.6s this pair, 1304.4s total, 298 unique coalitions cached)
+  L8 Shapley:  32%|███▏      | 16/50 [21:44<43:41, 77.11s/it]  L8 pair 17/50 done (53.3s this pair, 1357.7s total, 310 unique coalitions cached)
+  L8 Shapley:  34%|███▍      | 17/50 [22:37<38:28, 69.96s/it]  L8 pair 18/50 done (70.7s this pair, 1428.4s total, 326 unique coalitions cached)
+  L8 Shapley:  36%|███▌      | 18/50 [23:48<37:25, 70.18s/it]  L8 pair 19/50 done (79.7s this pair, 1508.1s total, 344 unique coalitions cached)
+  L8 Shapley:  38%|███▊      | 19/50 [25:08<37:43, 73.02s/it]  L8 pair 20/50 done (44.2s this pair, 1552.2s total, 354 unique coalitions cached)
+  L8 Shapley:  40%|████      | 20/50 [25:52<32:10, 64.36s/it]  L8 pair 21/50 done (70.7s this pair, 1622.9s total, 370 unique coalitions cached)
+  L8 Shapley:  42%|████▏     | 21/50 [27:02<32:01, 66.26s/it]  L8 pair 22/50 done (70.9s this pair, 1693.9s total, 386 unique coalitions cached)
+  L8 Shapley:  44%|████▍     | 22/50 [28:13<31:34, 67.67s/it]  L8 pair 23/50 done (61.8s this pair, 1755.7s total, 400 unique coalitions cached)
+  L8 Shapley:  46%|████▌     | 23/50 [29:15<29:39, 65.90s/it]  L8 pair 24/50 done (61.9s this pair, 1817.6s total, 414 unique coalitions cached)
+  L8 Shapley:  48%|████▊     | 24/50 [30:17<28:02, 64.70s/it]  L8 pair 25/50 done (70.7s this pair, 1888.3s total, 430 unique coalitions cached)
+  L8 Shapley:  50%|█████     | 25/50 [31:28<27:42, 66.51s/it]  L8 pair 26/50 done (62.1s this pair, 1950.4s total, 444 unique coalitions cached)
+  L8 Shapley:  52%|█████▏    | 26/50 [32:30<26:04, 65.18s/it]  L8 pair 27/50 done (70.7s this pair, 2021.1s total, 460 unique coalitions cached)
+  L8 Shapley:  54%|█████▍    | 27/50 [33:41<25:37, 66.85s/it]  L8 pair 28/50 done (70.9s this pair, 2092.0s total, 476 unique coalitions cached)
+  L8 Shapley:  56%|█████▌    | 28/50 [34:51<24:57, 68.06s/it]  L8 pair 29/50 done (61.9s this pair, 2153.9s total, 490 unique coalitions cached)
+  L8 Shapley:  58%|█████▊    | 29/50 [35:53<23:10, 66.21s/it]  L8 pair 30/50 done (62.0s this pair, 2215.9s total, 504 unique coalitions cached)
+  L8 Shapley:  60%|██████    | 30/50 [36:55<21:39, 64.95s/it]  L8 pair 31/50 done (53.1s this pair, 2269.0s total, 516 unique coalitions cached)
+  L8 Shapley:  62%|██████▏   | 31/50 [37:48<19:26, 61.40s/it]  L8 pair 32/50 done (70.8s this pair, 2339.8s total, 532 unique coalitions cached)
+  L8 Shapley:  64%|██████▍   | 32/50 [38:59<19:15, 64.21s/it]  L8 pair 33/50 done (44.2s this pair, 2383.9s total, 542 unique coalitions cached)
+  L8 Shapley:  66%|██████▌   | 33/50 [39:43<16:29, 58.20s/it]  L8 pair 34/50 done (61.8s this pair, 2445.7s total, 556 unique coalitions cached)
+  L8 Shapley:  68%|██████▊   | 34/50 [40:45<15:48, 59.27s/it]  L8 pair 35/50 done (61.8s this pair, 2507.5s total, 570 unique coalitions cached)
+  L8 Shapley:  70%|███████   | 35/50 [41:47<15:00, 60.04s/it]  L8 pair 36/50 done (53.2s this pair, 2560.8s total, 582 unique coalitions cached)
+  L8 Shapley:  72%|███████▏  | 36/50 [42:40<13:32, 58.00s/it]  L8 pair 37/50 done (61.8s this pair, 2622.6s total, 596 unique coalitions cached)
+  L8 Shapley:  74%|███████▍  | 37/50 [43:42<12:48, 59.13s/it]  L8 pair 38/50 done (53.1s this pair, 2675.7s total, 608 unique coalitions cached)
+  L8 Shapley:  76%|███████▌  | 38/50 [44:35<11:27, 57.32s/it]  L8 pair 39/50 done (70.9s this pair, 2746.6s total, 624 unique coalitions cached)
+  L8 Shapley:  78%|███████▊  | 39/50 [45:46<11:15, 61.40s/it]  L8 pair 40/50 done (62.4s this pair, 2809.0s total, 638 unique coalitions cached)
+  L8 Shapley:  80%|████████  | 40/50 [46:49<10:17, 61.71s/it]  L8 pair 41/50 done (53.7s this pair, 2862.7s total, 650 unique coalitions cached)
+  L8 Shapley:  82%|████████▏ | 41/50 [47:42<08:53, 59.31s/it]  L8 pair 42/50 done (62.0s this pair, 2924.7s total, 664 unique coalitions cached)
+  L8 Shapley:  84%|████████▍ | 42/50 [48:44<08:00, 60.12s/it]  L8 pair 43/50 done (70.7s this pair, 2995.4s total, 680 unique coalitions cached)
+  L8 Shapley:  86%|████████▌ | 43/50 [49:55<07:23, 63.29s/it]  L8 pair 44/50 done (61.8s this pair, 3057.2s total, 694 unique coalitions cached)
+  L8 Shapley:  88%|████████▊ | 44/50 [50:57<06:17, 62.85s/it]  L8 pair 45/50 done (53.2s this pair, 3110.4s total, 706 unique coalitions cached)
+  L8 Shapley:  90%|█████████ | 45/50 [51:50<04:59, 59.95s/it]  L8 pair 46/50 done (80.5s this pair, 3191.0s total, 724 unique coalitions cached)
+  L8 Shapley:  92%|█████████▏| 46/50 [53:10<04:24, 66.14s/it]  L8 pair 47/50 done (35.5s this pair, 3226.5s total, 732 unique coalitions cached)
+  L8 Shapley:  94%|█████████▍| 47/50 [53:46<02:50, 56.95s/it]  L8 pair 48/50 done (44.4s this pair, 3270.9s total, 742 unique coalitions cached)
+  L8 Shapley:  96%|█████████▌| 48/50 [54:30<01:46, 53.18s/it]  L8 pair 49/50 done (70.8s this pair, 3341.7s total, 758 unique coalitions cached)
+  L8 Shapley:  98%|█████████▊| 49/50 [55:41<00:58, 58.48s/it]  L8 pair 50/50 done (70.7s this pair, 3412.4s total, 774 unique coalitions cached)
+  L8 Shapley: 100%|██████████| 50/50 [56:52<00:00, 62.14s/it]                                                               L8: 100 perms, cache size=774, hit rate=40.5%, max |phi|=0.0357
+  Layer 9: 100 permutations (50 antithetic pairs)
+  L9 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L9 pair 1/50 done (101.7s this pair, 101.7s total, 24 unique coalitions cached)
+  L9 Shapley:   2%|▏         | 1/50 [01:41<1:23:04, 101.71s/it]  L9 pair 2/50 done (97.0s this pair, 198.7s total, 46 unique coalitions cached)
+  L9 Shapley:   4%|▍         | 2/50 [03:18<1:19:08, 98.93s/it]   L9 pair 3/50 done (88.3s this pair, 287.0s total, 66 unique coalitions cached)
+  L9 Shapley:   6%|▌         | 3/50 [04:46<1:13:41, 94.07s/it]  L9 pair 4/50 done (88.6s this pair, 375.6s total, 86 unique coalitions cached)
+  L9 Shapley:   8%|▊         | 4/50 [06:15<1:10:27, 91.91s/it]  L9 pair 5/50 done (79.6s this pair, 455.2s total, 104 unique coalitions cached)
+  L9 Shapley:  10%|█         | 5/50 [07:35<1:05:35, 87.46s/it]  L9 pair 6/50 done (88.3s this pair, 543.4s total, 124 unique coalitions cached)
+  L9 Shapley:  12%|█▏        | 6/50 [09:03<1:04:20, 87.74s/it]  L9 pair 7/50 done (79.8s this pair, 623.2s total, 142 unique coalitions cached)
+  L9 Shapley:  14%|█▍        | 7/50 [10:23<1:01:00, 85.13s/it]  L9 pair 8/50 done (88.3s this pair, 711.5s total, 162 unique coalitions cached)
+  L9 Shapley:  16%|█▌        | 8/50 [11:51<1:00:17, 86.14s/it]  L9 pair 9/50 done (88.2s this pair, 799.7s total, 182 unique coalitions cached)
+  L9 Shapley:  18%|█▊        | 9/50 [13:19<59:17, 86.77s/it]    L9 pair 10/50 done (88.2s this pair, 887.9s total, 202 unique coalitions cached)
+  L9 Shapley:  20%|██        | 10/50 [14:47<58:08, 87.22s/it]  L9 pair 11/50 done (62.0s this pair, 949.9s total, 216 unique coalitions cached)
+  L9 Shapley:  22%|██▏       | 11/50 [15:49<51:40, 79.50s/it]  L9 pair 12/50 done (70.6s this pair, 1020.5s total, 232 unique coalitions cached)
+  L9 Shapley:  24%|██▍       | 12/50 [17:00<48:37, 76.79s/it]  L9 pair 13/50 done (53.2s this pair, 1073.6s total, 244 unique coalitions cached)
+  L9 Shapley:  26%|██▌       | 13/50 [17:53<42:56, 69.63s/it]  L9 pair 14/50 done (79.6s this pair, 1153.2s total, 262 unique coalitions cached)
+  L9 Shapley:  28%|██▊       | 14/50 [19:13<43:34, 72.63s/it]  L9 pair 15/50 done (79.8s this pair, 1233.0s total, 280 unique coalitions cached)
+  L9 Shapley:  30%|███       | 15/50 [20:32<43:37, 74.79s/it]  L9 pair 16/50 done (62.0s this pair, 1295.0s total, 294 unique coalitions cached)
+  L9 Shapley:  32%|███▏      | 16/50 [21:34<40:12, 70.94s/it]  L9 pair 17/50 done (61.8s this pair, 1356.8s total, 308 unique coalitions cached)
+  L9 Shapley:  34%|███▍      | 17/50 [22:36<37:30, 68.20s/it]  L9 pair 18/50 done (61.8s this pair, 1418.6s total, 322 unique coalitions cached)
+  L9 Shapley:  36%|███▌      | 18/50 [23:38<35:20, 66.28s/it]  L9 pair 19/50 done (61.8s this pair, 1480.4s total, 336 unique coalitions cached)
+  L9 Shapley:  38%|███▊      | 19/50 [24:40<33:33, 64.94s/it]  L9 pair 20/50 done (70.8s this pair, 1551.3s total, 352 unique coalitions cached)
+  L9 Shapley:  40%|████      | 20/50 [25:51<33:21, 66.71s/it]  L9 pair 21/50 done (70.6s this pair, 1621.9s total, 368 unique coalitions cached)
+  L9 Shapley:  42%|████▏     | 21/50 [27:01<32:48, 67.89s/it]  L9 pair 22/50 done (79.6s this pair, 1701.5s total, 386 unique coalitions cached)
+  L9 Shapley:  44%|████▍     | 22/50 [28:21<33:19, 71.41s/it]  L9 pair 23/50 done (53.1s this pair, 1754.6s total, 398 unique coalitions cached)
+  L9 Shapley:  46%|████▌     | 23/50 [29:14<29:39, 65.90s/it]  L9 pair 24/50 done (53.5s this pair, 1808.1s total, 410 unique coalitions cached)
+  L9 Shapley:  48%|████▊     | 24/50 [30:08<26:56, 62.18s/it]  L9 pair 25/50 done (63.3s this pair, 1871.4s total, 424 unique coalitions cached)
+  L9 Shapley:  50%|█████     | 25/50 [31:11<26:02, 62.52s/it]  L9 pair 26/50 done (79.7s this pair, 1951.1s total, 442 unique coalitions cached)
+  L9 Shapley:  52%|█████▏    | 26/50 [32:31<27:03, 67.67s/it]  L9 pair 27/50 done (70.7s this pair, 2021.7s total, 458 unique coalitions cached)
+  L9 Shapley:  54%|█████▍    | 27/50 [33:41<26:17, 68.57s/it]  L9 pair 28/50 done (53.0s this pair, 2074.7s total, 470 unique coalitions cached)
+  L9 Shapley:  56%|█████▌    | 28/50 [34:34<23:25, 63.88s/it]  L9 pair 29/50 done (62.2s this pair, 2136.9s total, 484 unique coalitions cached)
+  L9 Shapley:  58%|█████▊    | 29/50 [35:36<22:10, 63.37s/it]  L9 pair 30/50 done (62.3s this pair, 2199.2s total, 498 unique coalitions cached)
+  L9 Shapley:  60%|██████    | 30/50 [36:39<21:01, 63.06s/it]  L9 pair 31/50 done (62.3s this pair, 2261.5s total, 512 unique coalitions cached)
+  L9 Shapley:  62%|██████▏   | 31/50 [37:41<19:53, 62.83s/it]  L9 pair 32/50 done (62.0s this pair, 2323.5s total, 526 unique coalitions cached)
+  L9 Shapley:  64%|██████▍   | 32/50 [38:43<18:46, 62.58s/it]  L9 pair 33/50 done (62.0s this pair, 2385.5s total, 540 unique coalitions cached)
+  L9 Shapley:  66%|██████▌   | 33/50 [39:45<17:41, 62.41s/it]  L9 pair 34/50 done (62.1s this pair, 2447.7s total, 554 unique coalitions cached)
+  L9 Shapley:  68%|██████▊   | 34/50 [40:47<16:37, 62.33s/it]  L9 pair 35/50 done (62.3s this pair, 2510.0s total, 568 unique coalitions cached)
+  L9 Shapley:  70%|███████   | 35/50 [41:49<15:34, 62.33s/it]  L9 pair 36/50 done (44.2s this pair, 2554.2s total, 578 unique coalitions cached)
+  L9 Shapley:  72%|███████▏  | 36/50 [42:34<13:16, 56.88s/it]  L9 pair 37/50 done (61.8s this pair, 2616.0s total, 592 unique coalitions cached)
+  L9 Shapley:  74%|███████▍  | 37/50 [43:35<12:38, 58.37s/it]  L9 pair 38/50 done (70.6s this pair, 2686.6s total, 608 unique coalitions cached)
+  L9 Shapley:  76%|███████▌  | 38/50 [44:46<12:24, 62.04s/it]  L9 pair 39/50 done (53.0s this pair, 2739.6s total, 620 unique coalitions cached)
+  L9 Shapley:  78%|███████▊  | 39/50 [45:39<10:52, 59.32s/it]  L9 pair 40/50 done (70.6s this pair, 2810.2s total, 636 unique coalitions cached)
+  L9 Shapley:  80%|████████  | 40/50 [46:50<10:27, 62.70s/it]  L9 pair 41/50 done (70.8s this pair, 2880.9s total, 652 unique coalitions cached)
+  L9 Shapley:  82%|████████▏ | 41/50 [48:00<09:46, 65.12s/it]  L9 pair 42/50 done (62.0s this pair, 2942.9s total, 666 unique coalitions cached)
+  L9 Shapley:  84%|████████▍ | 42/50 [49:02<08:33, 64.18s/it]  L9 pair 43/50 done (44.2s this pair, 2987.1s total, 676 unique coalitions cached)
+  L9 Shapley:  86%|████████▌ | 43/50 [49:47<06:47, 58.18s/it]  L9 pair 44/50 done (44.2s this pair, 3031.3s total, 686 unique coalitions cached)
+  L9 Shapley:  88%|████████▊ | 44/50 [50:31<05:23, 53.99s/it]  L9 pair 45/50 done (79.6s this pair, 3110.9s total, 704 unique coalitions cached)
+  L9 Shapley:  90%|█████████ | 45/50 [51:50<05:08, 61.68s/it]  L9 pair 46/50 done (26.5s this pair, 3137.4s total, 710 unique coalitions cached)
+  L9 Shapley:  92%|█████████▏| 46/50 [52:17<03:24, 51.12s/it]  L9 pair 47/50 done (53.0s this pair, 3190.4s total, 722 unique coalitions cached)
+  L9 Shapley:  94%|█████████▍| 47/50 [53:10<02:35, 51.68s/it]  L9 pair 48/50 done (79.6s this pair, 3270.0s total, 740 unique coalitions cached)
+  L9 Shapley:  96%|█████████▌| 48/50 [54:29<02:00, 60.04s/it]  L9 pair 49/50 done (44.2s this pair, 3314.1s total, 750 unique coalitions cached)
+  L9 Shapley:  98%|█████████▊| 49/50 [55:14<00:55, 55.28s/it]  L9 pair 50/50 done (44.2s this pair, 3358.3s total, 760 unique coalitions cached)
+  L9 Shapley: 100%|██████████| 50/50 [55:58<00:00, 51.95s/it]                                                               L9: 100 perms, cache size=760, hit rate=41.5%, max |phi|=0.0365
+  Layer 10: 100 permutations (50 antithetic pairs)
+  L10 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L10 pair 1/50 done (101.7s this pair, 101.7s total, 24 unique coalitions cached)
+  L10 Shapley:   2%|▏         | 1/50 [01:41<1:23:03, 101.71s/it]  L10 pair 2/50 done (88.5s this pair, 190.2s total, 44 unique coalitions cached)
+  L10 Shapley:   4%|▍         | 2/50 [03:10<1:15:08, 93.93s/it]   L10 pair 3/50 done (97.4s this pair, 287.6s total, 66 unique coalitions cached)
+  L10 Shapley:   6%|▌         | 3/50 [04:47<1:14:49, 95.52s/it]  L10 pair 4/50 done (79.6s this pair, 367.3s total, 84 unique coalitions cached)
+  L10 Shapley:   8%|▊         | 4/50 [06:07<1:08:25, 89.25s/it]  L10 pair 5/50 done (88.4s this pair, 455.6s total, 104 unique coalitions cached)
+  L10 Shapley:  10%|█         | 5/50 [07:35<1:06:42, 88.93s/it]  L10 pair 6/50 done (88.4s this pair, 544.0s total, 124 unique coalitions cached)
+  L10 Shapley:  12%|█▏        | 6/50 [09:03<1:05:04, 88.74s/it]  L10 pair 7/50 done (79.8s this pair, 623.8s total, 142 unique coalitions cached)
+  L10 Shapley:  14%|█▍        | 7/50 [10:23<1:01:30, 85.82s/it]  L10 pair 8/50 done (79.6s this pair, 703.4s total, 160 unique coalitions cached)
+  L10 Shapley:  16%|█▌        | 8/50 [11:43<58:41, 83.85s/it]    L10 pair 9/50 done (88.4s this pair, 791.9s total, 180 unique coalitions cached)
+  L10 Shapley:  18%|█▊        | 9/50 [13:11<58:16, 85.28s/it]  L10 pair 10/50 done (88.9s this pair, 880.7s total, 200 unique coalitions cached)
+  L10 Shapley:  20%|██        | 10/50 [14:40<57:35, 86.39s/it]  L10 pair 11/50 done (71.6s this pair, 952.3s total, 216 unique coalitions cached)
+  L10 Shapley:  22%|██▏       | 11/50 [15:52<53:12, 81.86s/it]  L10 pair 12/50 done (71.0s this pair, 1023.4s total, 232 unique coalitions cached)
+  L10 Shapley:  24%|██▍       | 12/50 [17:03<49:45, 78.57s/it]  L10 pair 13/50 done (62.1s this pair, 1085.4s total, 246 unique coalitions cached)
+  L10 Shapley:  26%|██▌       | 13/50 [18:05<45:22, 73.57s/it]  L10 pair 14/50 done (70.7s this pair, 1156.2s total, 262 unique coalitions cached)
+  L10 Shapley:  28%|██▊       | 14/50 [19:16<43:37, 72.72s/it]  L10 pair 15/50 done (79.8s this pair, 1235.9s total, 280 unique coalitions cached)
+  L10 Shapley:  30%|███       | 15/50 [20:35<43:39, 74.84s/it]  L10 pair 16/50 done (80.3s this pair, 1316.3s total, 298 unique coalitions cached)
+  L10 Shapley:  32%|███▏      | 16/50 [21:56<43:20, 76.49s/it]  L10 pair 17/50 done (62.1s this pair, 1378.4s total, 312 unique coalitions cached)
+  L10 Shapley:  34%|███▍      | 17/50 [22:58<39:41, 72.16s/it]  L10 pair 18/50 done (70.9s this pair, 1449.3s total, 328 unique coalitions cached)
+  L10 Shapley:  36%|███▌      | 18/50 [24:09<38:17, 71.79s/it]  L10 pair 19/50 done (62.5s this pair, 1511.8s total, 342 unique coalitions cached)
+  L10 Shapley:  38%|███▊      | 19/50 [25:11<35:39, 69.00s/it]  L10 pair 20/50 done (61.9s this pair, 1573.7s total, 356 unique coalitions cached)
+  L10 Shapley:  40%|████      | 20/50 [26:13<33:26, 66.88s/it]  L10 pair 21/50 done (35.4s this pair, 1609.1s total, 364 unique coalitions cached)
+  L10 Shapley:  42%|████▏     | 21/50 [26:49<27:45, 57.42s/it]  L10 pair 22/50 done (70.7s this pair, 1679.8s total, 380 unique coalitions cached)
+  L10 Shapley:  44%|████▍     | 22/50 [27:59<28:39, 61.40s/it]  L10 pair 23/50 done (35.3s this pair, 1715.1s total, 388 unique coalitions cached)
+  L10 Shapley:  46%|████▌     | 23/50 [28:35<24:06, 53.57s/it]  L10 pair 24/50 done (53.0s this pair, 1768.0s total, 400 unique coalitions cached)
+  L10 Shapley:  48%|████▊     | 24/50 [29:28<23:08, 53.39s/it]  L10 pair 25/50 done (70.6s this pair, 1838.7s total, 416 unique coalitions cached)
+  L10 Shapley:  50%|█████     | 25/50 [30:38<24:23, 58.56s/it]  L10 pair 26/50 done (70.7s this pair, 1909.4s total, 432 unique coalitions cached)
+  L10 Shapley:  52%|█████▏    | 26/50 [31:49<24:52, 62.21s/it]  L10 pair 27/50 done (53.1s this pair, 1962.5s total, 444 unique coalitions cached)
+  L10 Shapley:  54%|█████▍    | 27/50 [32:42<22:47, 59.47s/it]  L10 pair 28/50 done (70.6s this pair, 2033.1s total, 460 unique coalitions cached)
+  L10 Shapley:  56%|█████▌    | 28/50 [33:53<23:01, 62.81s/it]  L10 pair 29/50 done (71.2s this pair, 2104.2s total, 476 unique coalitions cached)
+  L10 Shapley:  58%|█████▊    | 29/50 [35:04<22:51, 65.31s/it]  L10 pair 30/50 done (61.8s this pair, 2166.0s total, 490 unique coalitions cached)
+  L10 Shapley:  60%|██████    | 30/50 [36:06<21:25, 64.26s/it]  L10 pair 31/50 done (44.1s this pair, 2210.1s total, 500 unique coalitions cached)
+  L10 Shapley:  62%|██████▏   | 31/50 [36:50<18:26, 58.22s/it]  L10 pair 32/50 done (17.9s this pair, 2228.0s total, 504 unique coalitions cached)
+  L10 Shapley:  64%|██████▍   | 32/50 [37:08<13:50, 46.12s/it]  L10 pair 33/50 done (52.9s this pair, 2281.0s total, 516 unique coalitions cached)
+  L10 Shapley:  66%|██████▌   | 33/50 [38:00<13:38, 48.17s/it]  L10 pair 34/50 done (44.1s this pair, 2325.1s total, 526 unique coalitions cached)
+  L10 Shapley:  68%|██████▊   | 34/50 [38:45<12:31, 46.96s/it]  L10 pair 35/50 done (79.4s this pair, 2404.5s total, 544 unique coalitions cached)
+  L10 Shapley:  70%|███████   | 35/50 [40:04<14:10, 56.69s/it]  L10 pair 36/50 done (61.8s this pair, 2466.3s total, 558 unique coalitions cached)
+  L10 Shapley:  72%|███████▏  | 36/50 [41:06<13:35, 58.23s/it]  L10 pair 37/50 done (44.2s this pair, 2510.5s total, 568 unique coalitions cached)
+  L10 Shapley:  74%|███████▍  | 37/50 [41:50<11:42, 54.02s/it]  L10 pair 38/50 done (61.9s this pair, 2572.4s total, 582 unique coalitions cached)
+  L10 Shapley:  76%|███████▌  | 38/50 [42:52<11:16, 56.39s/it]  L10 pair 39/50 done (61.8s this pair, 2634.2s total, 596 unique coalitions cached)
+  L10 Shapley:  78%|███████▊  | 39/50 [43:54<10:38, 58.02s/it]  L10 pair 40/50 done (70.9s this pair, 2705.1s total, 612 unique coalitions cached)
+  L10 Shapley:  80%|████████  | 40/50 [45:05<10:18, 61.87s/it]  L10 pair 41/50 done (70.6s this pair, 2775.8s total, 628 unique coalitions cached)
+  L10 Shapley:  82%|████████▏ | 41/50 [46:15<09:40, 64.50s/it]  L10 pair 42/50 done (44.3s this pair, 2820.1s total, 638 unique coalitions cached)
+  L10 Shapley:  84%|████████▍ | 42/50 [47:00<07:47, 58.45s/it]  L10 pair 43/50 done (61.7s this pair, 2881.8s total, 652 unique coalitions cached)
+  L10 Shapley:  86%|████████▌ | 43/50 [48:01<06:56, 59.44s/it]  L10 pair 44/50 done (26.5s this pair, 2908.3s total, 658 unique coalitions cached)
+  L10 Shapley:  88%|████████▊ | 44/50 [48:28<04:57, 49.56s/it]  L10 pair 45/50 done (52.9s this pair, 2961.3s total, 670 unique coalitions cached)
+  L10 Shapley:  90%|█████████ | 45/50 [49:21<04:12, 50.57s/it]  L10 pair 46/50 done (44.1s this pair, 3005.4s total, 680 unique coalitions cached)
+  L10 Shapley:  92%|█████████▏| 46/50 [50:05<03:14, 48.63s/it]  L10 pair 47/50 done (52.9s this pair, 3058.2s total, 692 unique coalitions cached)
+  L10 Shapley:  94%|█████████▍| 47/50 [50:58<02:29, 49.90s/it]  L10 pair 48/50 done (53.0s this pair, 3111.2s total, 704 unique coalitions cached)
+  L10 Shapley:  96%|█████████▌| 48/50 [51:51<01:41, 50.84s/it]  L10 pair 49/50 done (61.9s this pair, 3173.2s total, 718 unique coalitions cached)
+  L10 Shapley:  98%|█████████▊| 49/50 [52:53<00:54, 54.16s/it]  L10 pair 50/50 done (35.3s this pair, 3208.5s total, 726 unique coalitions cached)
+  L10 Shapley: 100%|██████████| 50/50 [53:28<00:00, 48.51s/it]                                                                L10: 100 perms, cache size=726, hit rate=44.2%, max |phi|=0.0414
+  Layer 11: 100 permutations (50 antithetic pairs)
+  L11 Shapley:   0%|          | 0/50 [00:00<?, ?it/s]  L11 pair 1/50 done (101.8s this pair, 101.8s total, 24 unique coalitions cached)
+  L11 Shapley:   2%|▏         | 1/50 [01:41<1:23:06, 101.76s/it]  L11 pair 2/50 done (97.1s this pair, 198.9s total, 46 unique coalitions cached)
+  L11 Shapley:   4%|▍         | 2/50 [03:18<1:19:14, 99.05s/it]   L11 pair 3/50 done (88.5s this pair, 287.4s total, 66 unique coalitions cached)
+  L11 Shapley:   6%|▌         | 3/50 [04:47<1:13:48, 94.22s/it]  L11 pair 4/50 done (88.3s this pair, 375.7s total, 86 unique coalitions cached)
+  L11 Shapley:   8%|▊         | 4/50 [06:15<1:10:26, 91.89s/it]  L11 pair 5/50 done (70.6s this pair, 446.3s total, 102 unique coalitions cached)
+  L11 Shapley:  10%|█         | 5/50 [07:26<1:03:09, 84.21s/it]  L11 pair 6/50 done (89.0s this pair, 535.3s total, 122 unique coalitions cached)
+  L11 Shapley:  12%|█▏        | 6/50 [08:55<1:02:57, 85.85s/it]  L11 pair 7/50 done (88.8s this pair, 624.1s total, 142 unique coalitions cached)
+  L11 Shapley:  14%|█▍        | 7/50 [10:24<1:02:13, 86.82s/it]  L11 pair 8/50 done (88.9s this pair, 713.0s total, 162 unique coalitions cached)
+  L11 Shapley:  16%|█▌        | 8/50 [11:53<1:01:13, 87.47s/it]  L11 pair 9/50 done (79.5s this pair, 792.6s total, 180 unique coalitions cached)
+  L11 Shapley:  18%|█▊        | 9/50 [13:12<58:05, 85.00s/it]    L11 pair 10/50 done (71.0s this pair, 863.6s total, 196 unique coalitions cached)
+  L11 Shapley:  20%|██        | 10/50 [14:23<53:47, 80.68s/it]  L11 pair 11/50 done (80.1s this pair, 943.7s total, 214 unique coalitions cached)
+  L11 Shapley:  22%|██▏       | 11/50 [15:43<52:19, 80.49s/it]  L11 pair 12/50 done (70.8s this pair, 1014.5s total, 230 unique coalitions cached)
+  L11 Shapley:  24%|██▍       | 12/50 [16:54<49:06, 77.55s/it]  L11 pair 13/50 done (70.8s this pair, 1085.2s total, 246 unique coalitions cached)
+  L11 Shapley:  26%|██▌       | 13/50 [18:05<46:33, 75.49s/it]  L11 pair 14/50 done (44.2s this pair, 1129.4s total, 256 unique coalitions cached)
+  L11 Shapley:  28%|██▊       | 14/50 [18:49<39:37, 66.03s/it]  L11 pair 15/50 done (61.9s this pair, 1191.3s total, 270 unique coalitions cached)
+  L11 Shapley:  30%|███       | 15/50 [19:51<37:47, 64.78s/it]  L11 pair 16/50 done (79.5s this pair, 1270.8s total, 288 unique coalitions cached)
+  L11 Shapley:  32%|███▏      | 16/50 [21:10<39:12, 69.21s/it]  L11 pair 17/50 done (71.2s this pair, 1341.9s total, 304 unique coalitions cached)
+  L11 Shapley:  34%|███▍      | 17/50 [22:21<38:23, 69.80s/it]  L11 pair 18/50 done (70.7s this pair, 1412.7s total, 320 unique coalitions cached)
+  L11 Shapley:  36%|███▌      | 18/50 [23:32<37:22, 70.08s/it]  L11 pair 19/50 done (61.9s this pair, 1474.5s total, 334 unique coalitions cached)
+  L11 Shapley:  38%|███▊      | 19/50 [24:34<34:55, 67.61s/it]  L11 pair 20/50 done (53.0s this pair, 1527.6s total, 346 unique coalitions cached)
+  L11 Shapley:  40%|████      | 20/50 [25:27<31:37, 63.23s/it]  L11 pair 21/50 done (61.8s this pair, 1589.3s total, 360 unique coalitions cached)
+  L11 Shapley:  42%|████▏     | 21/50 [26:29<30:21, 62.79s/it]  L11 pair 22/50 done (70.6s this pair, 1659.9s total, 376 unique coalitions cached)
+  L11 Shapley:  44%|████▍     | 22/50 [27:39<30:23, 65.13s/it]  L11 pair 23/50 done (70.7s this pair, 1730.6s total, 392 unique coalitions cached)
+  L11 Shapley:  46%|████▌     | 23/50 [28:50<30:03, 66.79s/it]  L11 pair 24/50 done (61.9s this pair, 1792.5s total, 406 unique coalitions cached)
+  L11 Shapley:  48%|████▊     | 24/50 [29:52<28:18, 65.32s/it]  L11 pair 25/50 done (61.9s this pair, 1854.4s total, 420 unique coalitions cached)
+  L11 Shapley:  50%|█████     | 25/50 [30:54<26:47, 64.29s/it]  L11 pair 26/50 done (71.2s this pair, 1925.5s total, 436 unique coalitions cached)
+  L11 Shapley:  52%|█████▏    | 26/50 [32:05<26:32, 66.35s/it]  L11 pair 27/50 done (70.9s this pair, 1996.4s total, 452 unique coalitions cached)
+  L11 Shapley:  54%|█████▍    | 27/50 [33:16<25:57, 67.71s/it]  L11 pair 28/50 done (61.9s this pair, 2058.3s total, 466 unique coalitions cached)
+  L11 Shapley:  56%|█████▌    | 28/50 [34:18<24:11, 65.97s/it]  L11 pair 29/50 done (61.8s this pair, 2120.2s total, 480 unique coalitions cached)
+  L11 Shapley:  58%|█████▊    | 29/50 [35:20<22:39, 64.73s/it]  L11 pair 30/50 done (62.1s this pair, 2182.2s total, 494 unique coalitions cached)
+  L11 Shapley:  60%|██████    | 30/50 [36:22<21:18, 63.93s/it]  L11 pair 31/50 done (70.8s this pair, 2253.0s total, 510 unique coalitions cached)
+  L11 Shapley:  62%|██████▏   | 31/50 [37:32<20:53, 65.98s/it]  L11 pair 32/50 done (53.0s this pair, 2306.0s total, 522 unique coalitions cached)
+  L11 Shapley:  64%|██████▍   | 32/50 [38:26<18:37, 62.10s/it]  L11 pair 33/50 done (53.2s this pair, 2359.2s total, 534 unique coalitions cached)
+  L11 Shapley:  66%|██████▌   | 33/50 [39:19<16:50, 59.42s/it]  L11 pair 34/50 done (61.8s this pair, 2421.0s total, 548 unique coalitions cached)
+  L11 Shapley:  68%|██████▊   | 34/50 [40:21<16:02, 60.14s/it]  L11 pair 35/50 done (61.8s this pair, 2482.9s total, 562 unique coalitions cached)
+  L11 Shapley:  70%|███████   | 35/50 [41:22<15:09, 60.65s/it]  L11 pair 36/50 done (27.0s this pair, 2509.9s total, 568 unique coalitions cached)
+  L11 Shapley:  72%|███████▏  | 36/50 [41:49<11:47, 50.56s/it]  L11 pair 37/50 done (70.9s this pair, 2580.8s total, 584 unique coalitions cached)
+  L11 Shapley:  74%|███████▍  | 37/50 [43:00<12:16, 56.66s/it]  L11 pair 38/50 done (61.9s this pair, 2642.7s total, 598 unique coalitions cached)
+  L11 Shapley:  76%|███████▌  | 38/50 [44:02<11:38, 58.24s/it]  L11 pair 39/50 done (35.4s this pair, 2678.1s total, 606 unique coalitions cached)
+  L11 Shapley:  78%|███████▊  | 39/50 [44:38<09:25, 51.38s/it]  L11 pair 40/50 done (53.1s this pair, 2731.1s total, 618 unique coalitions cached)
+  L11 Shapley:  80%|████████  | 40/50 [45:31<08:38, 51.89s/it]  L11 pair 41/50 done (62.0s this pair, 2793.1s total, 632 unique coalitions cached)
+  L11 Shapley:  82%|████████▏ | 41/50 [46:33<08:14, 54.92s/it]  L11 pair 42/50 done (61.9s this pair, 2855.1s total, 646 unique coalitions cached)
+  L11 Shapley:  84%|████████▍ | 42/50 [47:35<07:36, 57.02s/it]  L11 pair 43/50 done (62.2s this pair, 2917.3s total, 660 unique coalitions cached)
+  L11 Shapley:  86%|████████▌ | 43/50 [48:37<06:50, 58.58s/it]  L11 pair 44/50 done (62.5s this pair, 2979.7s total, 674 unique coalitions cached)
+  L11 Shapley:  88%|████████▊ | 44/50 [49:39<05:58, 59.74s/it]  L11 pair 45/50 done (53.6s this pair, 3033.3s total, 686 unique coalitions cached)
+  L11 Shapley:  90%|█████████ | 45/50 [50:33<04:49, 57.91s/it]  L11 pair 46/50 done (62.2s this pair, 3095.5s total, 700 unique coalitions cached)
+  L11 Shapley:  92%|█████████▏| 46/50 [51:35<03:56, 59.19s/it]  L11 pair 47/50 done (53.6s this pair, 3149.2s total, 712 unique coalitions cached)
+  L11 Shapley:  94%|█████████▍| 47/50 [52:29<02:52, 57.52s/it]  L11 pair 48/50 done (53.1s this pair, 3202.3s total, 724 unique coalitions cached)
+  L11 Shapley:  96%|█████████▌| 48/50 [53:22<01:52, 56.20s/it]  L11 pair 49/50 done (53.1s this pair, 3255.4s total, 736 unique coalitions cached)
+  L11 Shapley:  98%|█████████▊| 49/50 [54:15<00:55, 55.28s/it]  L11 pair 50/50 done (62.5s this pair, 3317.9s total, 750 unique coalitions cached)
+  L11 Shapley: 100%|██████████| 50/50 [55:17<00:00, 57.44s/it]                                                                L11: 100 perms, cache size=750, hit rate=42.3%, max |phi|=0.0736
+/home/s2319195/miniconda3/envs/head/lib/python3.12/site-packages/torch/utils/data/dataloader.py:432: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  self.check_worker_number_rationality()
+
+Shapley values saved to outputs/temporal_analysis/shapley_values.csv
+
+Verifying Shapley efficiency property...
+  L0: sum(phi)=0.0561, v(N)-v(0)=0.0561, error=0.0000
+  L1: sum(phi)=0.0574, v(N)-v(0)=0.0574, error=0.0000
+  L2: sum(phi)=0.0449, v(N)-v(0)=0.0449, error=0.0000
+  L3: sum(phi)=0.0773, v(N)-v(0)=0.0773, error=0.0000
+  L4: sum(phi)=0.1040, v(N)-v(0)=0.1040, error=0.0000
+  L5: sum(phi)=0.0515, v(N)-v(0)=0.0515, error=0.0000
+  L6: sum(phi)=0.1255, v(N)-v(0)=0.1255, error=0.0000
+  L7: sum(phi)=0.0490, v(N)-v(0)=0.0490, error=0.0000
+  L8: sum(phi)=0.0770, v(N)-v(0)=0.0770, error=0.0000
+  L9: sum(phi)=0.1703, v(N)-v(0)=0.1703, error=0.0000
+  L10: sum(phi)=0.1939, v(N)-v(0)=0.1939, error=0.0000
+  L11: sum(phi)=0.4485, v(N)-v(0)=0.4485, error=0.0000
+
+============================================================
+SHAPLEY COMPUTATION COMPLETE — 39583.0s (659.7 min)
+============================================================
+  L0: max |phi| = L0-H9 (+0.0203 ± 0.0020)
+  L1: max |phi| = L1-H9 (+0.0217 ± 0.0014)
+  L2: max |phi| = L2-H2 (+0.0315 ± 0.0020)
+  L3: max |phi| = L3-H7 (+0.0244 ± 0.0024)
+  L4: max |phi| = L4-H10 (+0.0257 ± 0.0034)
+  L5: max |phi| = L5-H2 (-0.0311 ± 0.0062)
+  L6: max |phi| = L6-H0 (+0.0387 ± 0.0029)
+  L7: max |phi| = L7-H11 (+0.0200 ± 0.0026)
+  L8: max |phi| = L8-H2 (+0.0357 ± 0.0027)
+  L9: max |phi| = L9-H10 (+0.0365 ± 0.0028)
+  L10: max |phi| = L10-H2 (+0.0414 ± 0.0027)
+  L11: max |phi| = L11-H0 (+0.0736 ± 0.0034)
+
+Summary saved to outputs/temporal_analysis/shapley_summary.json
+
+============================================================
+run_shapley_full.sh completed: Tue 17 Mar 02:37:23 GMT 2026
+Shapley values saved to outputs/temporal_analysis/shapley_values.csv
+Proceed with run_analysis.sh.
+============================================================
