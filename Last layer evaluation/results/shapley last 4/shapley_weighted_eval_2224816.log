@@ -1,0 +1,32 @@
+==================================================
+  Shapley-weighted fusion accuracy: 0.5034 (50.34%)
+==================================================
+
+Baseline (layer 11 only):
+  Layer 11 probe accuracy: 0.5077 (50.77%)
+
+Delta: -0.0043
+Normalized Shapley weights:
+  Layer  8: 0.0329
+  Layer  9: 0.0943
+  Layer 10: 0.2432
+  Layer 11: 0.6297
+
+Loading embeddings...
+  Layer 8: train (168913, 768), test (27157, 768)
+  Layer 9: train (168913, 768), test (27157, 768)
+  Layer 10: train (168913, 768), test (27157, 768)
+  Layer 11: train (168913, 768), test (27157, 768)
+
+Combined embedding shape: train (168913, 768), test (27157, 768)
+
+Training linear probe on weighted embeddings...
+
+==================================================
+  Shapley-weighted fusion accuracy: 0.5034 (50.34%)
+==================================================
+
+Baseline (layer 11 only):
+  Layer 11 probe accuracy: 0.5077 (50.77%)
+
+Delta: -0.0043
