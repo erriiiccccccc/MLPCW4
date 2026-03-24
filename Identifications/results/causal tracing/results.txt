@@ -1,0 +1,65 @@
+[hastings]s2197197: cat slurm-2216861.out
+Using a slow image processor as `use_fast` is unset and a slow processor was saved with this model. `use_fast=True` will be the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.
+============================================================
+TimeSformer Causal Tracing
+============================================================
+  Model:      /home/s2197197/timesformer/timesformer-model
+  Frames dir: ./evaluation_frames/frames
+  Val CSV:    ./evaluation_frames/frame_lists/val.csv
+  Videos:     24777
+  Device:     cuda
+
+Loading model...
+Model loaded.
+
+Found 12 attention layers to probe:
+  timesformer.encoder.layer.0.temporal_attention
+  timesformer.encoder.layer.1.temporal_attention
+  timesformer.encoder.layer.2.temporal_attention
+  timesformer.encoder.layer.3.temporal_attention
+  timesformer.encoder.layer.4.temporal_attention
+  timesformer.encoder.layer.5.temporal_attention
+  timesformer.encoder.layer.6.temporal_attention
+  timesformer.encoder.layer.7.temporal_attention
+  timesformer.encoder.layer.8.temporal_attention
+  timesformer.encoder.layer.9.temporal_attention
+  timesformer.encoder.layer.10.temporal_attention
+  timesformer.encoder.layer.11.temporal_attention
+Selected 24777 videos for causal tracing
+
+Running causal tracing on 24777 videos...
+100%|██████████| 24777/24777 [8:35:23<00:00,  1.25s/it]
+
+============================================================
+CAUSAL TRACING RESULTS
+============================================================
+
+Avg P(correct) — clean:     0.4888
+Avg P(correct) — corrupted: 0.3601
+Avg drop from corruption:   0.1287
+
+Skipped (missing frames): 0
+
+Layer causal effect scores (ranked):
+  Layer                                                      Score
+  -----------------------------------------------------------------
+  timesformer.encoder.layer.11.temporal_attention           0.0998  ← TOP
+  timesformer.encoder.layer.10.temporal_attention           0.0732
+  timesformer.encoder.layer.9.temporal_attention            0.0405
+  timesformer.encoder.layer.8.temporal_attention            0.0149
+  timesformer.encoder.layer.7.temporal_attention            0.0111
+  timesformer.encoder.layer.6.temporal_attention            0.0032
+  timesformer.encoder.layer.0.temporal_attention            0.0004
+  timesformer.encoder.layer.2.temporal_attention           -0.0001
+  timesformer.encoder.layer.1.temporal_attention           -0.0002
+  timesformer.encoder.layer.4.temporal_attention           -0.0008
+  timesformer.encoder.layer.5.temporal_attention           -0.0009
+  timesformer.encoder.layer.3.temporal_attention           -0.0010
+
+Most causally important layer: timesformer.encoder.layer.11.temporal_attention
+Least causally important layer: timesformer.encoder.layer.3.temporal_attention
+
+Full results saved to: causal_results.json
+
+Next step: use top_causal_layer result to decide which
+attention layers to modify with your causal mask.

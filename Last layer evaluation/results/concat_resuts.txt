@@ -1,0 +1,32 @@
+[hastings]s2197197: cat slurm-2227618.out
+============================================================
+Evaluating checkpoint: concat
+Checkpoint: /home/s2197197/timesformer/checkpoints/best.pt
+============================================================
+Device: cuda
+
+Loading base model...
+
+Loading checkpoint from /home/s2197197/timesformer/checkpoints/best.pt...
+Loaded epoch 5 (train loss=0.1668, train acc=95.37%)
+Loaded 24777 validation samples
+
+Running evaluation on 24777 videos...
+  Step 500/3098: top-1=53.33%  top-5=81.03%
+  Step 1000/3098: top-1=53.50%  top-5=80.99%
+  Step 1500/3098: top-1=54.08%  top-5=81.26%
+  Step 2000/3098: top-1=53.77%  top-5=81.06%
+  Step 2500/3098: top-1=53.87%  top-5=81.05%
+  Step 3000/3098: top-1=53.84%  top-5=81.05%
+
+============================================================
+RESULTS
+============================================================
+  Experiment:   concat
+  Top-1 Acc:    53.84%
+  Top-5 Acc:    81.11%
+
+  Reference baseline (HF finetuned): ~59.5%
+  Delta vs baseline: -5.66%
+
+Results saved to eval_results_concat.json
