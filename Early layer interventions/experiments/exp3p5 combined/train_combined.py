@@ -13,8 +13,8 @@ from shared import (
     DEVICE
 )
 from train_distillation import (
-    register_attention_capture, temporal_distillation_loss,
-    TEACHER_LAYERS, STUDENT_LAYERS, TEMPERATURE, DISTIL_WEIGHT
+    setup_hooks, distil_loss,
+    TEACHER_LAYERS, STUDENT_LAYERS, TEMP, DISTIL_W
 )
 
 WEAK_THRESHOLD   = 0.06
@@ -48,7 +48,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
     criterion = nn.CrossEntropyLoss()
 
-    captured, capture_handles = register_attention_capture(
+    captured, capture_handles = setup_hooks(
         model, TEACHER_LAYERS | STUDENT_LAYERS)
 
     model.eval()
@@ -65,9 +65,9 @@ def main():
 
             logits = model(pixel_values=pixel_values).logits
             ce_loss = criterion(logits, labels)
-            d_loss = temporal_distillation_loss(
-                captured, TEACHER_LAYERS, STUDENT_LAYERS, TEMPERATURE)
-            loss = ce_loss + DISTIL_WEIGHT * d_loss
+            d_loss = distil_loss(
+                captured, TEACHER_LAYERS, STUDENT_LAYERS, TEMP)
+            loss = ce_loss + DISTIL_W * d_loss
             loss.backward()
             optimizer.step()
 

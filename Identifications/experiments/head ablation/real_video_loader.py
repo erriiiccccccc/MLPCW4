@@ -113,9 +113,10 @@ def create_dataloader_from_config(config, processor=None):
         num_frames=config.num_frames,
         processor=processor,
     )
-    if config.num_eval_videos < len(dataset):
+    full_size = len(dataset)
+    if config.num_eval_videos < full_size:
         dataset = Subset(dataset, list(range(config.num_eval_videos)))
-        print(f"Subset to {config.num_eval_videos} videos (from {len(dataset)})")
+        print(f"Subset to {config.num_eval_videos} videos (from {full_size})")
     return DataLoader(
         dataset, batch_size=config.batch_size, shuffle=False,
         num_workers=config.num_workers, pin_memory=True,
