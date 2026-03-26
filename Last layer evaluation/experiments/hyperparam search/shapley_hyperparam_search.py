@@ -1,7 +1,4 @@
-"""
-Hyperparameter search for shapley weighted eval.
-Searches over C values and whether to scale before or after weighting.
-"""
+"""Search C and scaling order for Shapley-weighted fusion."""
 
 import json
 import numpy as np
@@ -20,7 +17,6 @@ print("Normalized Shapley weights:")
 for l in LAYERS:
     print(f"  Layer {l}: {weights[l]:.4f}")
 
-# ── Load raw embeddings ────────────────────────────────────────────────────────
 print("\nLoading embeddings...")
 train_parts, test_parts = {}, {}
 for l in LAYERS:
@@ -32,15 +28,12 @@ for l in LAYERS:
 train_labels = np.load(os.path.join(PROBE_DIR, "layer_11", "labels.npy"))
 test_labels  = np.load(os.path.join(PROBE_DIR, "layer_11", "test_labels.npy"))
 
-# ── Two scaling strategies ─────────────────────────────────────────────────────
-# A) weight raw embeddings, then scale the combined (current approach)
 train_combined_a = sum(weights[l] * train_parts[l] for l in LAYERS)
 test_combined_a  = sum(weights[l] * test_parts[l]  for l in LAYERS)
 sc_a = StandardScaler()
 X_train_a = sc_a.fit_transform(train_combined_a)
 X_test_a  = sc_a.transform(test_combined_a)
 
-# B) scale each layer first, then apply Shapley weights and sum
 scaled_train_parts = {}
 scaled_test_parts  = {}
 for l in LAYERS:
@@ -50,7 +43,6 @@ for l in LAYERS:
 X_train_b = sum(weights[l] * scaled_train_parts[l] for l in LAYERS)
 X_test_b  = sum(weights[l] * scaled_test_parts[l]  for l in LAYERS)
 
-# ── Grid search ────────────────────────────────────────────────────────────────
 C_values = [0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0]
 configs  = [
     ("scale after weight", X_train_a, X_test_a),

@@ -1,7 +1,4 @@
-"""
-Hyperparameter search for concat eval.
-Tries different C values, scalers, and solvers to find the best combo.
-"""
+"""Search C for the concatenated last-four-layer probe."""
 
 import numpy as np
 import os
@@ -12,7 +9,6 @@ from sklearn.metrics import accuracy_score
 PROBE_DIR = "/home/s2411221/probe_results"
 LAYERS    = [8, 9, 10, 11]
 
-# ── Load embeddings ────────────────────────────────────────────────────────────
 print("Loading embeddings...")
 train_parts, test_parts = [], []
 for l in LAYERS:
@@ -23,8 +19,6 @@ for l in LAYERS:
 train_labels = np.load(os.path.join(PROBE_DIR, "layer_11", "labels.npy"))
 test_labels  = np.load(os.path.join(PROBE_DIR, "layer_11", "test_labels.npy"))
 
-# ── Two scaling strategies ─────────────────────────────────────────────────────
-# A) per-layer scale then concat (your current approach)
 scaled_per_layer_train, scaled_per_layer_test = [], []
 for tr, te in zip(train_parts, test_parts):
     sc = StandardScaler()
@@ -33,14 +27,12 @@ for tr, te in zip(train_parts, test_parts):
 X_train_perlayer = np.concatenate(scaled_per_layer_train, axis=1)
 X_test_perlayer  = np.concatenate(scaled_per_layer_test,  axis=1)
 
-# B) concat raw then single global scale
 X_raw_train = np.concatenate(train_parts, axis=1)
 X_raw_test  = np.concatenate(test_parts,  axis=1)
 sc_global = StandardScaler()
 X_train_global = sc_global.fit_transform(X_raw_train)
 X_test_global  = sc_global.transform(X_raw_test)
 
-# ── Grid search ────────────────────────────────────────────────────────────────
 C_values = [0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
 
 configs = [
@@ -58,7 +50,7 @@ for config_name, X_tr, X_te in configs:
     for C in C_values:
         clf = LogisticRegression(
             C=C,
-            solver='saga',       # actually parallel, unlike lbfgs
+            solver='saga',
             max_iter=1000,
             n_jobs=-1,
             random_state=42

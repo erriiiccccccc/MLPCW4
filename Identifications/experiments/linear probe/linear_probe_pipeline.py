@@ -1,19 +1,5 @@
 #!/usr/bin/env python3
-"""
-Linear Probing + Shapley Value Pipeline for TimeSformer
-=======================================================
-Extracts features from all 12 transformer layers, trains linear probes,
-computes exact Shapley values, and exports attention maps.
-
-Output structure:
-  probe_results/
-    layer_00/ ... layer_11/
-      embeddings.npy, labels.npy, probe_accuracy.json,
-      probe_weights.npy, confusion_matrix.npy, attention_maps.npy
-    summary/
-      all_layer_accuracies.csv, shapley_values.json,
-      layer_comparison_plot.png, coalition_values.json
-"""
+"""Run linear probes and exact Shapley scoring over TimeSformer layers."""
 
 import os
 import sys
@@ -24,8 +10,6 @@ import numpy as np
 import pandas as pd
 from math import factorial
 from itertools import combinations
-from collections import defaultdict
-
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -35,25 +19,18 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.model_selection import train_test_split
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn as sns
-
-
-# ============================================================
-# 0. MODEL INSPECTION (run this first to find the right paths)
-# ============================================================
 def inspect_model(model_dir):
-    """Print model architecture so you know what to hook into."""
+    """Print the loaded model and detected transformer blocks."""
     print("=" * 60)
     print("MODEL INSPECTION")
     print("=" * 60)
 
-    # Try loading as a TimeSformer from timm or custom checkpoint
     model = load_model(model_dir)
 
     print("\n--- All named modules ---")
@@ -72,31 +49,23 @@ def inspect_model(model_dir):
 
 
 def load_model(model_dir):
-    """
-    Load TimeSformer model. Tries multiple common approaches.
-    Adjust this function if your model loads differently.
-    """
+    """Load a TimeSformer checkpoint using a few common layouts."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # --- Approach 1: Try loading from a saved checkpoint with model definition ---
-    # Check if there's a .pth or .pt file
     ckpt_files = [f for f in os.listdir(model_dir)
                   if f.endswith(('.pth', '.pt', '.pyth', '.pkl'))]
 
-    # Try timesformer package first
     try:
         from timesformer.models.vit import TimeSformer
-        # Look for config
         config_file = os.path.join(model_dir, 'config.yaml')
         if os.path.exists(config_file):
             import yaml
             with open(config_file) as f:
-                cfg = yaml.safe_load(f)
+                yaml.safe_load(f)
 
-        # Common TimeSformer instantiation
         model = TimeSformer(
             img_size=224,
-            num_classes=174,  # something-something-v2 has 174 classes
+            num_classes=174,
             num_frames=8,
             attention_type='divided_space_time',
         )
@@ -119,7 +88,6 @@ def load_model(model_dir):
     except Exception as e:
         print(f"timesformer package load failed: {e}")
 
-    # --- Approach 2: Try torch.load directly (if whole model was saved) ---
     try:
         if ckpt_files:
             ckpt_path = os.path.join(model_dir, ckpt_files[0])
@@ -134,9 +102,8 @@ def load_model(model_dir):
     except Exception as e:
         print(f"Direct load failed: {e}")
 
-    # --- Approach 3: Try HuggingFace transformers ---
     try:
-        from transformers import TimesformerModel, TimesformerForVideoClassification
+        from transformers import TimesformerForVideoClassification
         model = TimesformerForVideoClassification.from_pretrained(
             model_dir, local_files_only=True)
         model = model.to(device)
@@ -153,15 +120,11 @@ def load_model(model_dir):
 
 
 def find_transformer_blocks(model):
-    """
-    Auto-detect the list of transformer blocks.
-    Returns a nn.ModuleList or list of blocks, or None.
-    """
-    # Common attribute paths for TimeSformer variants
+    """Return the first block container that looks like a transformer stack."""
     candidates = [
-        'model.blocks',           # timesformer package
-        'blocks',                 # direct
-        'timesformer.encoder.layer',  # HuggingFace
+        'model.blocks',
+        'blocks',
+        'timesformer.encoder.layer',
         'encoder.layer',
         'encoder.layers',
         'transformer.layers',
@@ -180,18 +143,13 @@ def find_transformer_blocks(model):
 
 
 def find_attention_modules(block):
-    """Find attention module(s) within a transformer block."""
-    candidates = ['attn', 'temporal_attn', 'self_attention', 'attention',
-                  'temporal_fc', 'attn_drop']
+    """Return the first submodule whose name looks like attention."""
     for name, module in block.named_modules():
         if 'attn' in name.lower() and hasattr(module, 'forward'):
             return module
     return None
 
 
-# ============================================================
-# 1. DATASET
-# ============================================================
 class FrameVideoDataset(Dataset):
     """Load pre-extracted frames grouped by video."""
 
@@ -206,7 +164,6 @@ class FrameVideoDataset(Dataset):
                                  std=[0.229, 0.224, 0.225]),
         ])
 
-        # Parse csv: "video_id num_frames label_id" (space-separated, 3 cols)
         self.samples = []
         with open(csv_path, 'r') as f:
             for line in f:
@@ -225,12 +182,10 @@ class FrameVideoDataset(Dataset):
         frame_dir = os.path.join(self.frames_dir, video_id)
         frames = sorted([f for f in os.listdir(frame_dir) if f.endswith('.jpg')])
 
-        # Uniformly sample num_frames
         if len(frames) >= self.num_frames:
             indices = np.linspace(0, len(frames) - 1,
                                   self.num_frames, dtype=int)
         else:
-            # Repeat last frame if too few
             indices = list(range(len(frames)))
             while len(indices) < self.num_frames:
                 indices.append(len(frames) - 1)
@@ -241,16 +196,12 @@ class FrameVideoDataset(Dataset):
             img = Image.open(path).convert('RGB')
             imgs.append(self.transform(img))
 
-        # (T, C, H, W)
         video_tensor = torch.stack(imgs)
         return video_tensor, label
 
 
-# ============================================================
-# 2. FEATURE EXTRACTION WITH HOOKS
-# ============================================================
 class LayerFeatureExtractor:
-    """Hook into each transformer block to capture CLS embeddings + attention."""
+    """Capture block outputs and optional attention maps with forward hooks."""
 
     def __init__(self, model, num_layers=12, capture_attention=True):
         self.model = model
@@ -269,25 +220,22 @@ class LayerFeatureExtractor:
             print(f"WARNING: Expected {num_layers} layers but found {actual_num}")
             self.num_layers = actual_num
 
-        # Storage
         self.layer_features = {i: [] for i in range(self.num_layers)}
         self.layer_attentions = {i: [] for i in range(self.num_layers)}
         self.labels = []
         self.hooks = []
 
     def _make_feature_hook(self, layer_idx):
-        """Hook for capturing output of a transformer block."""
+        """Capture the CLS embedding from a block output."""
         def hook_fn(module, input, output):
-            # Handle different output formats
             if isinstance(output, tuple):
                 hidden = output[0]
             else:
                 hidden = output
 
-            # CLS token is index 0
-            if hidden.dim() == 3:  # (B, tokens, dim)
+            if hidden.dim() == 3:
                 cls = hidden[:, 0, :].detach().cpu()
-            elif hidden.dim() == 2:  # (B, dim) — already pooled
+            elif hidden.dim() == 2:
                 cls = hidden.detach().cpu()
             else:
                 cls = hidden.reshape(hidden.shape[0], -1).detach().cpu()
@@ -296,13 +244,11 @@ class LayerFeatureExtractor:
         return hook_fn
 
     def _make_attention_hook(self, layer_idx):
-        """Hook for capturing attention weights."""
+        """Capture attention weights when the module exposes them."""
         def hook_fn(module, input, output):
-            # Many attention modules return (attn_output, attn_weights)
             if isinstance(output, tuple) and len(output) >= 2:
                 attn_weights = output[1]
                 if attn_weights is not None:
-                    # Take mean over batch, keep per-head
                     self.layer_attentions[layer_idx].append(
                         attn_weights.detach().cpu()
                     )
@@ -313,11 +259,9 @@ class LayerFeatureExtractor:
         for i, block in enumerate(self.blocks):
             if i >= self.num_layers:
                 break
-            # Feature hook on the block itself
             h = block.register_forward_hook(self._make_feature_hook(i))
             self.hooks.append(h)
 
-            # Attention hook on the attention sub-module
             if self.capture_attention:
                 attn_module = find_attention_modules(block)
                 if attn_module is not None:
@@ -339,8 +283,6 @@ class LayerFeatureExtractor:
         print(f"\nExtracting features from {self.num_layers} layers...")
         with torch.no_grad():
             for batch_idx, (videos, labels) in enumerate(dataloader):
-                # videos: (B, T, C, H, W) — HuggingFace TimesformerForVideoClassification
-                # expects pixel_values in (B, T, C, H, W), no permutation needed
                 videos = videos.to(self.device)
                 _ = self.model(pixel_values=videos)
                 self.labels.append(labels)
@@ -350,7 +292,6 @@ class LayerFeatureExtractor:
 
         self.remove_hooks()
 
-        # Concatenate all batches
         results = {}
         for i in range(self.num_layers):
             if self.layer_features[i]:
@@ -366,7 +307,6 @@ class LayerFeatureExtractor:
 
         all_labels = torch.cat(self.labels, dim=0).numpy()
 
-        # Print shapes
         for i in sorted(results.keys()):
             emb_shape = results[i]['embeddings'].shape
             attn_shape = (results[i]['attention'].shape
@@ -377,9 +317,6 @@ class LayerFeatureExtractor:
         return results, all_labels
 
 
-# ============================================================
-# 3. LINEAR PROBING
-# ============================================================
 def train_linear_probe(X_train, y_train, X_test, y_test):
     """Train a logistic regression probe on train set, evaluate on test set."""
     scaler = StandardScaler()
@@ -399,7 +336,6 @@ def train_linear_probe(X_train, y_train, X_test, y_test):
     test_acc = accuracy_score(y_test, y_test_pred)
     cm = confusion_matrix(y_test, y_test_pred)
 
-    # Per-class accuracy
     per_class = {}
     for cls in np.unique(y_test):
         mask = y_test == cls
@@ -434,26 +370,22 @@ def run_all_linear_probes(train_layer_results, train_labels,
         print(f"\n{'=' * 50}")
         print(f"Layer {layer_idx}: train {train_emb.shape}, test {test_emb.shape}")
 
-        # Save embeddings and labels (train = used by compute_shapley.py)
         np.save(os.path.join(layer_dir, 'embeddings.npy'), train_emb)
         np.save(os.path.join(layer_dir, 'labels.npy'), train_labels)
         np.save(os.path.join(layer_dir, 'test_embeddings.npy'), test_emb)
         np.save(os.path.join(layer_dir, 'test_labels.npy'), test_labels)
 
-        # Save attention maps if available
         if 'attention' in train_layer_results[layer_idx]:
             attn = train_layer_results[layer_idx]['attention']
             np.save(os.path.join(layer_dir, 'attention_maps.npy'), attn)
             print(f"  Saved attention maps: {attn.shape}")
 
-        # Train probe on train set, evaluate on test set
         print(f"  Training linear probe...")
         probe_result = train_linear_probe(train_emb, train_labels,
                                           test_emb, test_labels)
         print(f"  Train acc: {probe_result['train_acc']:.4f}")
         print(f"  Test acc:  {probe_result['test_acc']:.4f}")
 
-        # Save probe results
         accuracy_info = {
             'layer': layer_idx,
             'train_acc': probe_result['train_acc'],
@@ -481,21 +413,13 @@ def run_all_linear_probes(train_layer_results, train_labels,
     return summary
 
 
-# ============================================================
-# 4. EXACT SHAPLEY VALUES
-# ============================================================
 def coalition_value(layer_results, labels, coalition,
                     test_size=0.3, random_state=42):
-    """
-    Value function: accuracy of a linear probe on concatenated
-    features from layers in the coalition.
-    """
+    """Return probe accuracy on the features from the requested coalition."""
     if len(coalition) == 0:
-        # Baseline: majority class accuracy
         unique, counts = np.unique(labels, return_counts=True)
         return float(counts.max()) / len(labels)
 
-    # Concatenate features from all layers in coalition
     feats = np.concatenate(
         [layer_results[i]['embeddings'] for i in coalition], axis=1
     )
@@ -517,10 +441,7 @@ def coalition_value(layer_results, labels, coalition,
 
 
 def exact_shapley(layer_results, labels, num_layers):
-    """
-    Compute exact Shapley values for all layers.
-    2^N coalitions where N = num_layers.
-    """
+    """Compute exact Shapley values by evaluating every coalition."""
     players = list(range(num_layers))
     n = len(players)
     total_coalitions = 2 ** n
@@ -530,7 +451,6 @@ def exact_shapley(layer_results, labels, num_layers):
     print(f"Players: {n}, Coalitions: {total_coalitions}")
     print(f"{'=' * 60}")
 
-    # Step 1: Evaluate all coalitions
     cache = {}
     eval_count = 0
     start_time = time.time()
@@ -552,7 +472,6 @@ def exact_shapley(layer_results, labels, num_layers):
     elapsed = time.time() - start_time
     print(f"\n  All {total_coalitions} coalitions evaluated in {elapsed:.1f}s")
 
-    # Step 2: Compute Shapley values
     shapley = {}
     for i in players:
         sv = 0.0
@@ -571,9 +490,6 @@ def exact_shapley(layer_results, labels, num_layers):
     return shapley, cache
 
 
-# ============================================================
-# 5. VISUALIZATION
-# ============================================================
 def plot_results(summary, shapley_values, output_dir):
     """Generate summary plots."""
     summary_dir = os.path.join(output_dir, 'summary')
@@ -586,7 +502,6 @@ def plot_results(summary, shapley_values, output_dir):
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
-    # Plot 1: Layer accuracy
     axes[0].plot(layers, train_accs, 'b-o', label='Train', markersize=6)
     axes[0].plot(layers, test_accs, 'r-o', label='Test', markersize=6)
     axes[0].set_xlabel('Layer')
@@ -596,7 +511,6 @@ def plot_results(summary, shapley_values, output_dir):
     axes[0].set_xticks(layers)
     axes[0].grid(True, alpha=0.3)
 
-    # Plot 2: Shapley values
     colors = ['green' if v >= 0 else 'red' for v in shapley_vals]
     axes[1].bar(layers, shapley_vals, color=colors, alpha=0.7, edgecolor='black')
     axes[1].set_xlabel('Layer')
@@ -606,7 +520,6 @@ def plot_results(summary, shapley_values, output_dir):
     axes[1].axhline(y=0, color='black', linewidth=0.5)
     axes[1].grid(True, alpha=0.3)
 
-    # Plot 3: Accuracy gain (layer N - layer N-1)
     gains = [test_accs[0]] + [test_accs[i] - test_accs[i-1]
                                for i in range(1, len(test_accs))]
     colors_g = ['green' if g >= 0 else 'red' for g in gains]
@@ -630,11 +543,9 @@ def save_summary(summary, shapley_values, coalition_cache, output_dir):
     summary_dir = os.path.join(output_dir, 'summary')
     os.makedirs(summary_dir, exist_ok=True)
 
-    # Layer accuracies CSV
     df = pd.DataFrame(summary)
     df.to_csv(os.path.join(summary_dir, 'all_layer_accuracies.csv'), index=False)
 
-    # Shapley values JSON
     shapley_export = {
         'shapley_values': {str(k): v for k, v in shapley_values.items()},
         'ranking': [str(k) for k, v in sorted(
@@ -648,7 +559,6 @@ def save_summary(summary, shapley_values, coalition_cache, output_dir):
     with open(os.path.join(summary_dir, 'shapley_values.json'), 'w') as f:
         json.dump(shapley_export, f, indent=2)
 
-    # Coalition values (for reproducibility)
     coalition_export = {}
     for coalition_set, value in coalition_cache.items():
         key = ','.join(str(x) for x in sorted(coalition_set)) or 'empty'
@@ -656,7 +566,6 @@ def save_summary(summary, shapley_values, coalition_cache, output_dir):
     with open(os.path.join(summary_dir, 'coalition_values.json'), 'w') as f:
         json.dump(coalition_export, f, indent=2)
 
-    # Print final ranking
     print(f"\n{'=' * 60}")
     print("FINAL LAYER RANKING BY SHAPLEY VALUE")
     print(f"{'=' * 60}")
@@ -668,9 +577,6 @@ def save_summary(summary, shapley_values, coalition_cache, output_dir):
               f"Shapley: {sv:+.6f}  |  Probe acc: {acc:.4f}")
 
 
-# ============================================================
-# MAIN
-# ============================================================
 def main():
     parser = argparse.ArgumentParser(
         description='Linear Probe + Shapley Pipeline for TimeSformer'
@@ -701,7 +607,6 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    # Load model
     print("\n[1/5] Loading model...")
     model = load_model(args.model_dir)
 
@@ -713,7 +618,6 @@ def main():
         print(f"  Using {torch.cuda.device_count()} GPUs")
         model = nn.DataParallel(model)
 
-    # Load data
     print("\n[2/5] Loading datasets...")
     raw_model = model.module if isinstance(model, nn.DataParallel) else model
 
@@ -743,7 +647,6 @@ def main():
         pin_memory=True
     )
 
-    # Extract features from train set
     print("\n[3/5] Extracting layer features from train set...")
     train_extractor = LayerFeatureExtractor(
         raw_model,
@@ -752,7 +655,6 @@ def main():
     )
     train_layer_results, train_labels = train_extractor.extract(train_dataloader)
 
-    # Extract features from test set
     print("\n    Extracting layer features from test set...")
     test_extractor = LayerFeatureExtractor(
         raw_model,
@@ -761,7 +663,6 @@ def main():
     )
     test_layer_results, test_labels = test_extractor.extract(test_dataloader)
 
-    # Linear probes
     print("\n[4/5] Training linear probes (train set) → evaluating on test set...")
     summary = run_all_linear_probes(
         train_layer_results, train_labels,
@@ -769,7 +670,6 @@ def main():
         args.output_dir
     )
 
-    # Shapley values
     if not args.skip_shapley:
         print("\n[5/5] Computing exact Shapley values...")
         shapley_values, coalition_cache = exact_shapley(
@@ -780,7 +680,6 @@ def main():
         shapley_values = {s['layer']: 0.0 for s in summary}
         coalition_cache = {}
 
-    # Save and plot
     save_summary(summary, shapley_values, coalition_cache, args.output_dir)
     plot_results(summary, shapley_values, args.output_dir)
 

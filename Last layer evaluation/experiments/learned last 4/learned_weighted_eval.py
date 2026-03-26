@@ -1,7 +1,4 @@
-"""
-Learned layer weighting baseline.
-Compares against shapley_weighted_eval.py and layer-11-only baseline.
-"""
+"""Train a learned weighted fusion over layers 8-11."""
 import json
 import numpy as np
 import torch
@@ -15,7 +12,6 @@ EPOCHS    = 50
 BATCH     = 64
 LR        = 1e-3
 
-# ── 1. Load embeddings ────────────────────────────────────────────────────────
 print("Loading embeddings...")
 train_embs, test_embs = [], []
 for l in LAYERS:
@@ -27,7 +23,6 @@ train_labels = np.load(f"{PROBE_DIR}/layer_11/labels.npy")
 test_labels  = np.load(f"{PROBE_DIR}/layer_11/test_labels.npy")
 print(f"  Train: {train_embs[0].shape[0]} samples | Test: {test_embs[0].shape[0]} samples")
 
-# ── 2. StandardScale each layer independently ─────────────────────────────────
 print("Scaling embeddings...")
 scaled_train, scaled_test = [], []
 for t, e in zip(train_embs, test_embs):
@@ -35,16 +30,14 @@ for t, e in zip(train_embs, test_embs):
     scaled_train.append(sc.fit_transform(t).astype(np.float32))
     scaled_test.append(sc.transform(e).astype(np.float32))
 
-# Stack to (N, 4, 768)
-X_train = torch.tensor(np.stack(scaled_train, axis=1))  # (N, 4, 768)
-X_test  = torch.tensor(np.stack(scaled_test,  axis=1))  # (M, 4, 768)
+X_train = torch.tensor(np.stack(scaled_train, axis=1))
+X_test  = torch.tensor(np.stack(scaled_test,  axis=1))
 y_train = torch.tensor(train_labels, dtype=torch.long)
 y_test  = torch.tensor(test_labels,  dtype=torch.long)
 
 num_classes = int(y_train.max().item()) + 1
 print(f"  Classes: {num_classes}")
 
-# ── 3. Model ──────────────────────────────────────────────────────────────────
 class LearnedWeightedModel(nn.Module):
     def __init__(self, num_layers, embed_dim, num_classes):
         super().__init__()
@@ -52,9 +45,8 @@ class LearnedWeightedModel(nn.Module):
         self.head = nn.Linear(embed_dim, num_classes)
 
     def forward(self, x):
-        # x: (B, num_layers, embed_dim)
-        weights = torch.softmax(self.layer_logits, dim=0)  # (num_layers,)
-        fused = (x * weights.view(1, -1, 1)).sum(dim=1)    # (B, embed_dim)
+        weights = torch.softmax(self.layer_logits, dim=0)
+        fused = (x * weights.view(1, -1, 1)).sum(dim=1)
         return self.head(fused)
 
     def get_weights(self):
@@ -68,13 +60,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 criterion = nn.CrossEntropyLoss()
 
-# ── 4. DataLoader ─────────────────────────────────────────────────────────────
 train_loader = DataLoader(
     TensorDataset(X_train, y_train),
     batch_size=BATCH, shuffle=True, num_workers=4, pin_memory=True
 )
 
-# ── 5. Training loop ──────────────────────────────────────────────────────────
 print(f"\nTraining for {EPOCHS} epochs...")
 for epoch in range(1, EPOCHS + 1):
     model.train()
@@ -97,7 +87,6 @@ for epoch in range(1, EPOCHS + 1):
         print(f"  Epoch {epoch:3d}/{EPOCHS}  loss={total_loss/total:.4f}  "
               f"train_acc={correct/total:.4f}  weights=[{w_str}]")
 
-# ── 6. Evaluation ─────────────────────────────────────────────────────────────
 model.eval()
 with torch.no_grad():
     all_correct, all_total = 0, 0
@@ -108,7 +97,6 @@ with torch.no_grad():
         all_total += len(yb)
 test_acc = all_correct / all_total
 
-# ── 7. Results ────────────────────────────────────────────────────────────────
 final_weights = model.get_weights()
 
 with open(f"{PROBE_DIR}/layer_11/probe_accuracy.json") as f:
@@ -126,7 +114,6 @@ delta = test_acc - baseline_acc
 print(f"Delta vs baseline: {delta:+.4f} ({delta*100:+.2f}%)")
 print("="*60)
 
-# Save results
 results = {
     "test_acc": test_acc,
     "baseline_accuracy": baseline_acc,

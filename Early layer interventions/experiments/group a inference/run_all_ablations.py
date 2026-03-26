@@ -1,27 +1,18 @@
 #!/usr/bin/env python3
-"""
-Group A: Inference-only head manipulation experiments.
+"""Run the Group A inference-time head intervention experiments."""
 
-Runs sequentially, sharing one dataset load:
-  - Baseline              : unmodified model
-  - Exp 1                 : harmful head masking  {(5,2),(2,1),(6,7),(0,4)}
-  - Exp 2                 : negligible head pruning (10 heads)
-  - Exp 1+2               : combined (14 heads)
-  - Exp 4                 : spectral norm on QKV of harmful layers {0,2,5,6}
-  - Exp 4+1               : spectral norm + harmful masking
-  - Control A             : random 4 heads masked (3 seeds)
-  - Control B             : random 10 heads masked (3 seeds)
+import json
+import os
+import random
+import sys
+import time
 
-Results saved to ~/temporal_experiments/results/<exp>.json
-"""
-
-import os, sys, json, time, random
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.nn.utils import spectral_norm
-from PIL import Image, ImageFile
+from PIL import ImageFile
 from transformers import TimesformerForVideoClassification
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../setup'))
@@ -32,7 +23,6 @@ torch.manual_seed(42)
 random.seed(42)
 np.random.seed(42)
 
-# ── CONFIG ────────────────────────────────────────────────────────────────────
 MODEL_DIR   = '/home/s2411221/MLPCW4/timesformer-model'
 FRAMES_DIR  = '/disk/scratch/MLPG102/evaluation_frames/frames'
 TEST_CSV    = '/disk/scratch/MLPG102/evaluation_frames/frame_lists/test.csv'
@@ -40,25 +30,23 @@ RESULTS_DIR = '/home/s2411221/temporal_experiments/results'
 BATCH_SIZE  = 8
 NUM_WORKERS = 0
 NUM_FRAMES  = 8
-NUM_CROPS   = 3         # paper protocol: 3 spatial crops
-HEAD_SIZE   = 64        # hidden_size(768) // num_heads(12)
+NUM_CROPS   = 3
+HEAD_SIZE   = 64
 NUM_HEADS   = 12
 DEVICE      = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# Shapley-identified head sets
 HARMFUL_HEADS    = [(5, 2), (2, 1), (6, 7), (0, 4)]
 NEGLIGIBLE_HEADS = [(0, 5), (1, 0), (4, 0), (5, 5),
                     (7, 0), (7, 7), (8, 1), (9, 4), (9, 0), (10, 6)]
-HARMFUL_LAYERS   = {0, 2, 5, 6}   # layers containing harmful heads (for spectral norm)
+HARMFUL_LAYERS   = {0, 2, 5, 6}
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 print(f"Device: {DEVICE}")
 print(f"Results → {RESULTS_DIR}")
 
 
-# ── MODEL LOADING ─────────────────────────────────────────────────────────────
 def load_fresh_model():
-    """Load model fresh (needed before spectral_norm to avoid double-wrapping)."""
+    """Load a fresh frozen model instance."""
     model = TimesformerForVideoClassification.from_pretrained(
         MODEL_DIR, local_files_only=True)
     model.eval()
@@ -68,7 +56,6 @@ def load_fresh_model():
     return model
 
 
-# ── HOOKS ─────────────────────────────────────────────────────────────────────
 def make_head_mask_hook(masked_heads):
     """Zero out specific head channels in TimesformerSelfAttention output."""
     def hook(module, input, output):
@@ -80,11 +67,7 @@ def make_head_mask_hook(masked_heads):
 
 
 def register_mask_hooks(model, head_pairs):
-    """
-    Register masking hooks for (layer, head) pairs.
-    Groups heads by layer to register one hook per layer.
-    Returns list of hook handles.
-    """
+    """Register one masking hook per layer and return the handles."""
     layer_to_heads = {}
     for (layer, head) in head_pairs:
         layer_to_heads.setdefault(layer, []).append(head)
@@ -102,7 +85,6 @@ def remove_hooks(handles):
         h.remove()
 
 
-# ── SPECTRAL NORM ─────────────────────────────────────────────────────────────
 def apply_spectral_norm(model, target_layers):
     """Apply spectral norm to Q, K, V projections in temporal attention."""
     for idx in target_layers:
@@ -111,10 +93,9 @@ def apply_spectral_norm(model, target_layers):
     print(f"  Spectral norm applied to layers {sorted(target_layers)}")
 
 
-# ── EVALUATION ────────────────────────────────────────────────────────────────
 def evaluate(model, dataloader, desc=""):
     model.eval()
-    all_probs  = {}   # sample_idx -> list[prob tensor]
+    all_probs  = {}
     all_labels = {}
 
     t0 = time.time()
@@ -183,9 +164,7 @@ def load_result(name):
     return None
 
 
-# ── MAIN ──────────────────────────────────────────────────────────────────────
 def main():
-    # ── Dataset (shared across all experiments) ────────────────────────────
     print("\nLoading dataset...")
     dataset = SSv2Dataset(
         frames_dir=FRAMES_DIR, test_csv=TEST_CSV,
@@ -197,7 +176,6 @@ def main():
 
     all_results = {}
 
-    # ── BASELINE ──────────────────────────────────────────────────────────
     cached = load_result('baseline')
     if cached:
         print("\n[Baseline] Skipping — already done")
@@ -211,7 +189,6 @@ def main():
         all_results['baseline'] = res
         baseline_top1 = res['top1']
 
-    # ── EXP 1: Harmful head masking ────────────────────────────────────────
     cached = load_result('exp1_harmful_masking')
     if cached:
         print("\n[Exp 1] Skipping — already done")
@@ -228,7 +205,6 @@ def main():
             'delta_top1': res['top1'] - baseline_top1})
         all_results['exp1'] = res
 
-    # ── EXP 2: Negligible head pruning ─────────────────────────────────────
     cached = load_result('exp2_negligible_pruning')
     if cached:
         print("\n[Exp 2] Skipping — already done")
@@ -245,7 +221,6 @@ def main():
             'delta_top1': res['top1'] - baseline_top1})
         all_results['exp2'] = res
 
-    # ── EXP 1+2: Combined ──────────────────────────────────────────────────
     cached = load_result('exp1p2_combined_masking')
     if cached:
         print("\n[Exp 1+2] Skipping — already done")
@@ -263,7 +238,6 @@ def main():
             'delta_top1': res['top1'] - baseline_top1})
         all_results['exp1p2'] = res
 
-    # ── EXP 4: Spectral norm ──────────────────────────────────────────────
     cached = load_result('exp4_spectral_norm')
     if cached:
         print("\n[Exp 4] Skipping — already done")
@@ -279,7 +253,6 @@ def main():
         all_results['exp4'] = res
         del model_sn
 
-    # ── EXP 4+1: Spectral norm + harmful masking ──────────────────────────
     cached = load_result('exp4p1_spectralnorm_masking')
     if cached:
         print("\n[Exp 4+1] Skipping — already done")
@@ -298,7 +271,6 @@ def main():
         all_results['exp4p1'] = res
         del model_sn1
 
-    # ── CONTROL A: Random 4 heads masked (3 seeds) ────────────────────────
     cached = load_result('control_a_random4')
     if cached:
         print("\n[Control A] Skipping — already done")
@@ -328,7 +300,6 @@ def main():
             'delta_top1_mean': ctrl_a_mean - baseline_top1})
         all_results['control_a'] = {'top1': ctrl_a_mean, 'top1_std': ctrl_a_std}
 
-    # ── CONTROL B: Random 10 heads masked (3 seeds) ───────────────────────
     cached = load_result('control_b_random10')
     if cached:
         print("\n[Control B] Skipping — already done")
@@ -358,7 +329,6 @@ def main():
             'delta_top1_mean': ctrl_b_mean - baseline_top1})
         all_results['control_b'] = {'top1': ctrl_b_mean, 'top1_std': ctrl_b_std}
 
-    # ── SUMMARY ───────────────────────────────────────────────────────────
     print("\n" + "=" * 65)
     print("  GROUP A SUMMARY")
     print("=" * 65)

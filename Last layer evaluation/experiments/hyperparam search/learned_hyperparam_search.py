@@ -1,7 +1,4 @@
-"""
-Hyperparameter search for learned weighted eval.
-Searches over LR, weight decay, and batch size.
-"""
+"""Search optimizer settings for the learned weighted fusion model."""
 
 import json
 import numpy as np
@@ -13,9 +10,8 @@ import os
 
 PROBE_DIR = "/home/s2411221/probe_results"
 LAYERS    = [8, 9, 10, 11]
-EPOCHS    = 100   # fixed — more epochs for a fair chance
+EPOCHS    = 100
 
-# ── Load & scale embeddings (per-layer, same as original) ─────────────────────
 print("Loading embeddings...")
 train_embs, test_embs = [], []
 for l in LAYERS:
@@ -32,15 +28,14 @@ for t, e in zip(train_embs, test_embs):
     scaled_train.append(sc.fit_transform(t).astype(np.float32))
     scaled_test.append(sc.transform(e).astype(np.float32))
 
-X_train = torch.tensor(np.stack(scaled_train, axis=1))   # (N, 4, 768)
-X_test  = torch.tensor(np.stack(scaled_test,  axis=1))   # (M, 4, 768)
+X_train = torch.tensor(np.stack(scaled_train, axis=1))
+X_test  = torch.tensor(np.stack(scaled_test,  axis=1))
 y_train = torch.tensor(train_labels, dtype=torch.long)
 y_test  = torch.tensor(test_labels,  dtype=torch.long)
 num_classes = int(y_train.max().item()) + 1
 
 print(f"  Train: {X_train.shape[0]} | Test: {X_test.shape[0]} | Classes: {num_classes}")
 
-# ── Model ─────────────────────────────────────────────────────────────────────
 class LearnedWeightedModel(nn.Module):
     def __init__(self, num_layers, embed_dim, num_classes):
         super().__init__()
@@ -55,7 +50,6 @@ class LearnedWeightedModel(nn.Module):
     def get_weights(self):
         return torch.softmax(self.layer_logits, dim=0).detach().cpu().numpy()
 
-# ── Grid ──────────────────────────────────────────────────────────────────────
 LR_VALUES           = [1e-4, 5e-4, 1e-3, 5e-3]
 WEIGHT_DECAY_VALUES = [0.0, 1e-4, 1e-3]
 BATCH_VALUES        = [64, 256]

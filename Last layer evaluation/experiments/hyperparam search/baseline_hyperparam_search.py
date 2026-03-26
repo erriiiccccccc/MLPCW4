@@ -1,7 +1,4 @@
-"""
-Hyperparameter search for baseline eval (layer 11 only, logistic regression).
-Searches over C values, consistent with the other hyperparam searches.
-"""
+"""Search C for the layer-11 logistic-regression baseline."""
 
 import json
 import numpy as np
@@ -13,7 +10,6 @@ from sklearn.metrics import accuracy_score
 PROBE_DIR = "/home/s2411221/probe_results"
 LAYER     = 11
 
-# ── Load embeddings ────────────────────────────────────────────────────────────
 print("Loading embeddings...", flush=True)
 layer_dir   = os.path.join(PROBE_DIR, f"layer_{LAYER:02d}")
 X_train_raw = np.load(os.path.join(layer_dir, "embeddings.npy"))
@@ -22,12 +18,10 @@ y_train     = np.load(os.path.join(layer_dir, "labels.npy"))
 y_test      = np.load(os.path.join(layer_dir, "test_labels.npy"))
 print(f"  Train: {X_train_raw.shape[0]} | Test: {X_test_raw.shape[0]}", flush=True)
 
-# ── Scale ──────────────────────────────────────────────────────────────────────
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train_raw)
 X_test  = sc.transform(X_test_raw)
 
-# ── Grid search over C ─────────────────────────────────────────────────────────
 C_values = [0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0]
 
 print(f"\n{'C':<10} {'Test Acc':>10}", flush=True)
