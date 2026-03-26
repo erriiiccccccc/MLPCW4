@@ -1,5 +1,3 @@
-"""Search optimizer settings for the learned weighted fusion model."""
-
 import json
 import numpy as np
 import torch
@@ -9,10 +7,9 @@ from sklearn.preprocessing import StandardScaler
 import os
 
 PROBE_DIR = "/home/s2411221/probe_results"
-LAYERS    = [8, 9, 10, 11]
-EPOCHS    = 100
+LAYERS = [8, 9, 10, 11]
+EPOCHS = 100
 
-print("Loading embeddings...")
 train_bits, test_bits = [], []
 for l in LAYERS:
     d = os.path.join(PROBE_DIR, f"layer_{l:02d}")
@@ -20,7 +17,7 @@ for l in LAYERS:
     test_bits.append(np.load(os.path.join(d, "test_embeddings.npy")))
 
 train_labels = np.load(os.path.join(PROBE_DIR, "layer_11", "labels.npy"))
-test_labels  = np.load(os.path.join(PROBE_DIR, "layer_11", "test_labels.npy"))
+test_labels = np.load(os.path.join(PROBE_DIR, "layer_11", "test_labels.npy"))
 
 train_scaled, test_scaled = [], []
 for t, e in zip(train_bits, test_bits):
@@ -29,12 +26,12 @@ for t, e in zip(train_bits, test_bits):
     test_scaled.append(sc.transform(e).astype(np.float32))
 
 X_train = torch.tensor(np.stack(train_scaled, axis=1))
-X_test  = torch.tensor(np.stack(test_scaled,  axis=1))
+X_test = torch.tensor(np.stack(test_scaled, axis=1))
 y_train = torch.tensor(train_labels, dtype=torch.long)
-y_test  = torch.tensor(test_labels,  dtype=torch.long)
+y_test = torch.tensor(test_labels, dtype=torch.long)
 num_classes = int(y_train.max().item()) + 1
 
-print(f"  Train: {X_train.shape[0]} | Test: {X_test.shape[0]} | Classes: {num_classes}")
+print(f"Train: {X_train.shape[0]} | Test: {X_test.shape[0]} | Classes: {num_classes}")
 
 class LearnedWeightedModel(nn.Module):
     def __init__(self, num_layers, embed_dim, num_classes):
@@ -43,22 +40,20 @@ class LearnedWeightedModel(nn.Module):
         self.head = nn.Linear(embed_dim, num_classes)
 
     def forward(self, x):
-        weights = torch.softmax(self.layer_logits, dim=0)
-        fused   = (x * weights.view(1, -1, 1)).sum(dim=1)
-        return self.head(fused)
+        w = torch.softmax(self.layer_logits, dim=0)
+        return self.head((x * w.view(1, -1, 1)).sum(dim=1))
 
     def get_weights(self):
         return torch.softmax(self.layer_logits, dim=0).detach().cpu().numpy()
 
-LR_VALUES           = [1e-4, 5e-4, 1e-3, 5e-3]
+LR_VALUES = [1e-4, 5e-4, 1e-3, 5e-3]
 WEIGHT_DECAY_VALUES = [0.0, 1e-4, 1e-3]
-BATCH_VALUES        = [64, 256]
+BATCH_VALUES = [64, 256]
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {device}\n")
 
-test_ds     = TensorDataset(X_test, y_test)
-test_loader = DataLoader(test_ds, batch_size=512)
+test_loader = DataLoader(TensorDataset(X_test, y_test), batch_size=512)
 
 best_acc = 0
 best_cfg = None
@@ -73,7 +68,7 @@ for lr in LR_VALUES:
             run += 1
             print(f"[{run}/{total_configs}] lr={lr}  wd={wd}  batch={batch}", flush=True)
 
-            model     = LearnedWeightedModel(len(LAYERS), 768, num_classes).to(device)
+            model = LearnedWeightedModel(len(LAYERS), 768, num_classes).to(device)
             optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
             criterion = nn.CrossEntropyLoss()
@@ -99,13 +94,13 @@ for lr in LR_VALUES:
                 for xb, yb in test_loader:
                     xb, yb = xb.to(device), yb.to(device)
                     ok += (model(xb).argmax(1) == yb).sum().item()
-                    n  += len(yb)
+                    n += len(yb)
             acc = ok / n
 
             ws = model.get_weights()
             w_line = "  ".join(f"L{l}:{ws[i]:.3f}" for i, l in enumerate(LAYERS))
             marker = " <-- best" if acc > best_acc else ""
-            print(f"  acc={acc*100:.2f}%  weights=[{w_line}]{marker}", flush=True)
+            print(f"  acc={acc*100:.2f}%  weights=[{w_line}]{marker}")
 
             if acc > best_acc:
                 best_acc = acc

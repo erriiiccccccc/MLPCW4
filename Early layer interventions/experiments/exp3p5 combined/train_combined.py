@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Run the combined Shapley-WD and distillation experiment."""
 
 import os
 import sys
@@ -36,9 +35,7 @@ def build_shapley_param_groups(model):
 
 
 def main():
-    print("=" * 60)
     print("Exp 3+5: Shapley WD + Knowledge Distillation (combined)")
-    print("=" * 60)
 
     train_loader = make_train_loader()
 
@@ -47,9 +44,9 @@ def main():
     unfreeze_temporal(model)
 
     param_groups = build_shapley_param_groups(model)
-    optimizer    = torch.optim.AdamW(param_groups)
-    scheduler    = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
-    criterion    = nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(param_groups)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+    criterion = nn.CrossEntropyLoss()
 
     captured, capture_handles = register_attention_capture(
         model, TEACHER_LAYERS | STUDENT_LAYERS)
@@ -63,21 +60,21 @@ def main():
 
         for batch_idx, (pixel_values, labels) in enumerate(train_loader):
             pixel_values = pixel_values.to(DEVICE)
-            labels       = labels.to(DEVICE)
+            labels = labels.to(DEVICE)
             optimizer.zero_grad()
 
-            logits  = model(pixel_values=pixel_values).logits
+            logits = model(pixel_values=pixel_values).logits
             ce_loss = criterion(logits, labels)
-            d_loss  = temporal_distillation_loss(
+            d_loss = temporal_distillation_loss(
                 captured, TEACHER_LAYERS, STUDENT_LAYERS, TEMPERATURE)
-            loss    = ce_loss + DISTIL_WEIGHT * d_loss
+            loss = ce_loss + DISTIL_WEIGHT * d_loss
             loss.backward()
             optimizer.step()
 
-            epoch_ce     += ce_loss.item()
+            epoch_ce += ce_loss.item()
             epoch_distil += d_loss.item()
-            correct      += (logits.argmax(1) == labels).sum().item()
-            total        += labels.size(0)
+            correct += (logits.argmax(1) == labels).sum().item()
+            total += labels.size(0)
 
             if batch_idx % 100 == 0:
                 print(f"  [Exp3+5] Epoch {epoch+1}/{EPOCHS} | "
@@ -85,10 +82,10 @@ def main():
                       f"CE={ce_loss.item():.4f} | Distil={d_loss.item():.4f}")
 
         scheduler.step()
-        avg_ce     = epoch_ce / len(train_loader)
+        avg_ce = epoch_ce / len(train_loader)
         avg_distil = epoch_distil / len(train_loader)
-        acc        = correct / total
-        elapsed    = time.time() - t0
+        acc = correct / total
+        elapsed = time.time() - t0
         history.append({'epoch': epoch+1, 'ce_loss': avg_ce,
                          'distil_loss': avg_distil, 'train_acc': acc})
         print(f"  [Exp3+5] Epoch {epoch+1} | CE={avg_ce:.4f} | "
@@ -97,7 +94,6 @@ def main():
     for h in capture_handles:
         h.remove()
 
-    print("\n  Evaluating Exp 3+5...")
     res = evaluate(model, desc="Exp3+5")
     save_result('exp3p5_combined', res, {
         'history': history,
@@ -110,9 +106,7 @@ def main():
         }
     })
 
-    print("\n" + "="*60)
-    print(f"  Exp 3+5: Top-1={res['top1']*100:.2f}%  Top-5={res['top5']*100:.2f}%")
-    print("="*60)
+    print(f"\nExp 3+5: Top-1={res['top1']*100:.2f}%  Top-5={res['top5']*100:.2f}%", flush=True)
 
 
 if __name__ == '__main__':

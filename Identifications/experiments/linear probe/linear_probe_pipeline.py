@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-"""Run linear probes and exact Shapley scoring over TimeSformer layers."""
-
 import os
 import sys
 import json
@@ -25,12 +23,9 @@ from sklearn.model_selection import train_test_split
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-def inspect_model(model_dir):
-    """Print the loaded model and detected transformer blocks."""
-    print("=" * 60)
-    print("MODEL INSPECTION")
-    print("=" * 60)
 
+
+def inspect_model(model_dir):
     net = load_model(model_dir)
 
     print("\n--- All named modules ---")
@@ -49,7 +44,6 @@ def inspect_model(model_dir):
 
 
 def load_model(model_dir):
-    """Load a TimeSformer checkpoint using a few common layouts."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     ckpt_files = [f for f in os.listdir(model_dir)
@@ -64,10 +58,8 @@ def load_model(model_dir):
                 yaml.safe_load(f)
 
         model = TimeSformer(
-            img_size=224,
-            num_classes=174,
-            num_frames=8,
-            attention_type='divided_space_time',
+            img_size=224, num_classes=174,
+            num_frames=8, attention_type='divided_space_time',
         )
         if ckpt_files:
             ckpt_path = os.path.join(model_dir, ckpt_files[0])
@@ -81,7 +73,6 @@ def load_model(model_dir):
                 model.load_state_dict(ckpt)
         model = model.to(device)
         model.eval()
-        print("Loaded via timesformer package")
         return model
     except ImportError:
         print("timesformer package not found, trying alternatives...")
@@ -97,7 +88,6 @@ def load_model(model_dir):
                 raise ValueError("Got a state_dict, not a model object")
             model = model.to(device)
             model.eval()
-            print("Loaded via direct torch.load")
             return model
     except Exception as e:
         print(f"Direct load failed: {e}")
@@ -108,26 +98,21 @@ def load_model(model_dir):
             model_dir, local_files_only=True)
         model = model.to(device)
         model.eval()
-        print("Loaded via HuggingFace transformers")
         return model
     except Exception as e:
         print(f"HuggingFace load failed: {e}")
 
     raise RuntimeError(
         f"Could not load model from {model_dir}. "
-        "Please edit the load_model() function for your specific setup."
+        "Edit load_model() for your specific setup."
     )
 
 
 def find_transformer_blocks(model):
-    """Return the first block container that looks like a transformer stack."""
     paths = [
-        'model.blocks',
-        'blocks',
-        'timesformer.encoder.layer',
-        'encoder.layer',
-        'encoder.layers',
-        'transformer.layers',
+        'model.blocks', 'blocks',
+        'timesformer.encoder.layer', 'encoder.layer',
+        'encoder.layers', 'transformer.layers',
         'model.encoder.layer',
     ]
     for path in paths:
@@ -143,7 +128,6 @@ def find_transformer_blocks(model):
 
 
 def find_attention_modules(block):
-    """Return the first submodule whose name looks like attention."""
     for n, mod in block.named_modules():
         if 'attn' in n.lower() and hasattr(mod, 'forward'):
             return mod
@@ -151,8 +135,6 @@ def find_attention_modules(block):
 
 
 class FrameVideoDataset(Dataset):
-    """Load pre-extracted frames grouped by video."""
-
     def __init__(self, csv_path, frames_dir, num_frames=8):
         self.frames_dir = frames_dir
         self.num_frames = num_frames
@@ -196,13 +178,10 @@ class FrameVideoDataset(Dataset):
             img = Image.open(path).convert('RGB')
             imgs.append(self.transform(img))
 
-        video_tensor = torch.stack(imgs)
-        return video_tensor, label
+        return torch.stack(imgs), label
 
 
 class LayerFeatureExtractor:
-    """Capture block outputs and optional attention maps with forward hooks."""
-
     def __init__(self, model, num_layers=12, capture_attention=True):
         self.model = model
         self.num_layers = num_layers
@@ -226,7 +205,6 @@ class LayerFeatureExtractor:
         self.hooks = []
 
     def _make_feature_hook(self, layer_idx):
-        """Capture the CLS embedding from a block output."""
         def hook_fn(module, input, output):
             if isinstance(output, tuple):
                 hidden = output[0]
@@ -244,31 +222,25 @@ class LayerFeatureExtractor:
         return hook_fn
 
     def _make_attention_hook(self, layer_idx):
-        """Capture attention weights when the module exposes them."""
         def hook_fn(module, input, output):
             if isinstance(output, tuple) and len(output) >= 2:
                 attn_weights = output[1]
                 if attn_weights is not None:
-                    self.attn_buf[layer_idx].append(
-                        attn_weights.detach().cpu()
-                    )
+                    self.attn_buf[layer_idx].append(attn_weights.detach().cpu())
         return hook_fn
 
     def register_hooks(self):
-        """Register forward hooks on all transformer blocks."""
         for i, block in enumerate(self.blocks):
             if i >= self.num_layers:
                 break
-            h = block.register_forward_hook(self._make_feature_hook(i))
-            self.hooks.append(h)
+            self.hooks.append(block.register_forward_hook(self._make_feature_hook(i)))
 
             if self.capture_attention:
                 attn_module = find_attention_modules(block)
                 if attn_module is not None:
-                    h = attn_module.register_forward_hook(
-                        self._make_attention_hook(i)
+                    self.hooks.append(
+                        attn_module.register_forward_hook(self._make_attention_hook(i))
                     )
-                    self.hooks.append(h)
 
     def remove_hooks(self):
         for h in self.hooks:
@@ -276,7 +248,6 @@ class LayerFeatureExtractor:
         self.hooks = []
 
     def extract(self, dataloader):
-        """Run full extraction."""
         self.register_hooks()
         self.model.eval()
 
@@ -299,9 +270,7 @@ class LayerFeatureExtractor:
                     'embeddings': torch.cat(self.feat_buf[i], dim=0).numpy()
                 }
                 if self.attn_buf[i]:
-                    out[i]['attention'] = torch.cat(
-                        self.attn_buf[i], dim=0
-                    ).numpy()
+                    out[i]['attention'] = torch.cat(self.attn_buf[i], dim=0).numpy()
             else:
                 print(f"  WARNING: No features captured for layer {i}")
 
@@ -309,24 +278,18 @@ class LayerFeatureExtractor:
 
         for i in sorted(out.keys()):
             emb_shape = out[i]['embeddings'].shape
-            attn_shape = (out[i]['attention'].shape
-                          if 'attention' in out[i] else 'None')
-            print(f"  Layer {i:2d}: embeddings {emb_shape}, "
-                  f"attention {attn_shape}")
+            attn_shape = out[i]['attention'].shape if 'attention' in out[i] else 'None'
+            print(f"  Layer {i:2d}: embeddings {emb_shape}, attention {attn_shape}")
 
         return out, ys
 
 
 def train_linear_probe(X_train, y_train, X_test, y_test):
-    """Train a logistic regression probe on train set, evaluate on test set."""
     scaler = StandardScaler()
     X_train_s = scaler.fit_transform(X_train)
     X_test_s = scaler.transform(X_test)
 
-    clf = LogisticRegression(
-        max_iter=1000, C=1.0, solver='lbfgs',
-        verbose=0
-    )
+    clf = LogisticRegression(max_iter=1000, C=1.0, solver='lbfgs', verbose=0)
     clf.fit(X_train_s, y_train)
 
     y_train_pred = clf.predict(X_train_s)
@@ -358,7 +321,6 @@ def train_linear_probe(X_train, y_train, X_test, y_test):
 
 def run_all_linear_probes(train_layer_results, train_labels,
                           test_layer_results, test_labels, output_dir):
-    """Train linear probe on train set, evaluate on test set, per layer."""
     rows = []
 
     for layer_idx in sorted(train_layer_results.keys()):
@@ -367,8 +329,7 @@ def run_all_linear_probes(train_layer_results, train_labels,
 
         train_emb = train_layer_results[layer_idx]['embeddings']
         test_emb = test_layer_results[layer_idx]['embeddings']
-        print(f"\n{'=' * 50}")
-        print(f"Layer {layer_idx}: train {train_emb.shape}, test {test_emb.shape}")
+        print(f"\nLayer {layer_idx}: train {train_emb.shape}, test {test_emb.shape}")
 
         np.save(os.path.join(layer_dir, 'embeddings.npy'), train_emb)
         np.save(os.path.join(layer_dir, 'labels.npy'), train_labels)
@@ -415,7 +376,6 @@ def run_all_linear_probes(train_layer_results, train_labels,
 
 def coalition_value(layer_results, labels, picked,
                     test_size=0.3, random_state=42):
-    """Return probe accuracy on the features from the requested coalition."""
     if len(picked) == 0:
         _, counts = np.unique(labels, return_counts=True)
         return float(counts.max()) / len(labels)
@@ -433,23 +393,18 @@ def coalition_value(layer_results, labels, picked,
     X_train_s = scaler.fit_transform(X_train)
     X_test_s = scaler.transform(X_test)
 
-    clf = LogisticRegression(
-        max_iter=500, C=1.0, solver='lbfgs'
-    )
+    clf = LogisticRegression(max_iter=500, C=1.0, solver='lbfgs')
     clf.fit(X_train_s, y_train)
     return float(clf.score(X_test_s, y_test))
 
 
 def exact_shapley(layer_results, labels, num_layers):
-    """Compute exact Shapley values by evaluating every coalition."""
     players = list(range(num_layers))
     n = len(players)
     total_sets = 2 ** n
 
-    print(f"\n{'=' * 60}")
-    print(f"EXACT SHAPLEY VALUES")
+    print(f"\nEXACT SHAPLEY VALUES")
     print(f"Players: {n}, Coalitions: {total_sets}")
-    print(f"{'=' * 60}")
 
     seen = {}
     done = 0
@@ -458,8 +413,7 @@ def exact_shapley(layer_results, labels, num_layers):
     for size in range(n + 1):
         for combo in combinations(players, size):
             combo_key = frozenset(combo)
-            val = coalition_value(layer_results, labels, list(combo))
-            seen[combo_key] = val
+            seen[combo_key] = coalition_value(layer_results, labels, list(combo))
             done += 1
 
             if done % 100 == 0:
@@ -491,7 +445,6 @@ def exact_shapley(layer_results, labels, num_layers):
 
 
 def plot_results(rows, svs, output_dir):
-    """Generate summary plots."""
     out_dir = os.path.join(output_dir, 'summary')
     os.makedirs(out_dir, exist_ok=True)
 
@@ -539,7 +492,6 @@ def plot_results(rows, svs, output_dir):
 
 
 def save_summary(rows, svs, coal_cache, output_dir):
-    """Save all summary data."""
     out_dir = os.path.join(output_dir, 'summary')
     os.makedirs(out_dir, exist_ok=True)
 
@@ -566,9 +518,7 @@ def save_summary(rows, svs, coal_cache, output_dir):
     with open(os.path.join(out_dir, 'coalition_values.json'), 'w') as f:
         json.dump(coal_dump, f, indent=2)
 
-    print(f"\n{'=' * 60}")
-    print("FINAL LAYER RANKING BY SHAPLEY VALUE")
-    print(f"{'=' * 60}")
+    print(f"\nFINAL LAYER RANKING BY SHAPLEY VALUE")
     for rank, (layer, sv) in enumerate(sorted(
         svs.items(), key=lambda x: x[1], reverse=True
     )):
@@ -578,31 +528,19 @@ def save_summary(rows, svs, coal_cache, output_dir):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Linear Probe + Shapley Pipeline for TimeSformer'
-    )
-    parser.add_argument('--model_dir', type=str, required=True,
-                        help='Path to TimeSformer model directory')
-    parser.add_argument('--frames_dir', type=str, required=True,
-                        help='Path to extracted frames')
-    parser.add_argument('--train_csv', type=str, required=True,
-                        help='Path to train.csv frame list')
-    parser.add_argument('--test_csv', type=str, required=True,
-                        help='Path to test.csv frame list')
-    parser.add_argument('--output_dir', type=str, required=True,
-                        help='Where to save all results')
-    parser.add_argument('--num_layers', type=int, default=12,
-                        help='Number of transformer layers (default: 12)')
-    parser.add_argument('--num_frames', type=int, default=8,
-                        help='Frames per video (default: 8)')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_dir', type=str, required=True)
+    parser.add_argument('--frames_dir', type=str, required=True)
+    parser.add_argument('--train_csv', type=str, required=True)
+    parser.add_argument('--test_csv', type=str, required=True)
+    parser.add_argument('--output_dir', type=str, required=True)
+    parser.add_argument('--num_layers', type=int, default=12)
+    parser.add_argument('--num_frames', type=int, default=8)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--num_workers', type=int, default=8)
-    parser.add_argument('--inspect_only', action='store_true',
-                        help='Only print model architecture, then exit')
-    parser.add_argument('--skip_shapley', action='store_true',
-                        help='Skip Shapley computation (just do probes)')
-    parser.add_argument('--multi_gpu', action='store_true',
-                        help='Use DataParallel for multi-GPU')
+    parser.add_argument('--inspect_only', action='store_true')
+    parser.add_argument('--skip_shapley', action='store_true')
+    parser.add_argument('--multi_gpu', action='store_true')
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -627,11 +565,8 @@ def main():
         num_frames=args.num_frames
     )
     train_dataloader = DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=args.num_workers,
-        pin_memory=True
+        train_dataset, batch_size=args.batch_size,
+        shuffle=False, num_workers=args.num_workers, pin_memory=True
     )
 
     test_dataset = FrameVideoDataset(
@@ -640,30 +575,23 @@ def main():
         num_frames=args.num_frames
     )
     test_dataloader = DataLoader(
-        test_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=args.num_workers,
-        pin_memory=True
+        test_dataset, batch_size=args.batch_size,
+        shuffle=False, num_workers=args.num_workers, pin_memory=True
     )
 
     print("\n[3/5] Extracting layer features from train set...")
     train_extractor = LayerFeatureExtractor(
-        base_model,
-        num_layers=args.num_layers,
-        capture_attention=True
+        base_model, num_layers=args.num_layers, capture_attention=True
     )
     train_layer_results, train_labels = train_extractor.extract(train_dataloader)
 
     print("\n    Extracting layer features from test set...")
     test_extractor = LayerFeatureExtractor(
-        base_model,
-        num_layers=args.num_layers,
-        capture_attention=False
+        base_model, num_layers=args.num_layers, capture_attention=False
     )
     test_layer_results, test_labels = test_extractor.extract(test_dataloader)
 
-    print("\n[4/5] Training linear probes (train set) → evaluating on test set...")
+    print("\n[4/5] Training linear probes...")
     rows = run_all_linear_probes(
         train_layer_results, train_labels,
         test_layer_results, test_labels,
@@ -683,7 +611,7 @@ def main():
     save_summary(rows, svs, coal_cache, args.output_dir)
     plot_results(rows, svs, args.output_dir)
 
-    print("\nDone! All results saved to:", args.output_dir)
+    print("\nAll results saved to:", args.output_dir)
 
 
 if __name__ == '__main__':

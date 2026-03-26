@@ -1,5 +1,3 @@
-"""Shared helpers for the Group B temporal fine-tuning experiments."""
-
 import json
 import os
 import random
@@ -46,9 +44,9 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 class SSv2TrainDataset(Dataset):
     def __init__(self, csv_path, frames_dir, processor, num_frames=8):
         self.frames_dir = frames_dir
-        self.processor  = processor
+        self.processor = processor
         self.num_frames = num_frames
-        self.samples    = []
+        self.samples = []
         with open(csv_path) as f:
             for line in f:
                 parts = line.strip().split()
@@ -98,7 +96,6 @@ def freeze_all(model):
 
 
 def unfreeze_temporal(model):
-    """Unfreeze only temporal_attention, temporal_dense, temporal_layernorm."""
     n = 0
     for block in model.timesformer.encoder.layer:
         for p in block.temporal_attention.parameters():
@@ -107,7 +104,7 @@ def unfreeze_temporal(model):
             p.requires_grad_(True); n += p.numel()
         for p in block.temporal_layernorm.parameters():
             p.requires_grad_(True); n += p.numel()
-    print(f"  Unfrozen temporal parameters: {n:,}")
+    print(f"  Unfrozen temporal params: {n:,}")
     return n
 
 
@@ -127,7 +124,7 @@ def evaluate(model, desc="eval"):
     with torch.no_grad():
         for i, (videos, labels, sidxs) in enumerate(loader):
             videos = videos.to(DEVICE)
-            probs  = F.softmax(model(pixel_values=videos).logits, dim=-1)
+            probs = F.softmax(model(pixel_values=videos).logits, dim=-1)
             for prob, label, sidx in zip(probs, labels, sidxs):
                 s = sidx.item()
                 all_probs.setdefault(s, []).append(prob.cpu())
@@ -144,8 +141,8 @@ def evaluate(model, desc="eval"):
     per_class_t = {}
 
     for sidx, probs_list in all_probs.items():
-        avg  = torch.stack(probs_list).mean(0)
-        lbl  = all_labels[sidx]
+        avg = torch.stack(probs_list).mean(0)
+        lbl = all_labels[sidx]
         per_class_t[lbl] = per_class_t.get(lbl, 0) + 1
         if avg.argmax().item() == lbl:
             correct_top1 += 1
@@ -180,5 +177,5 @@ def save_result(name, result, extra=None):
     path = os.path.join(RESULTS_DIR, f'{name}.json')
     with open(path, 'w') as f:
         json.dump(record, f, indent=2)
-    print(f"  Saved → {path}")
+    print(f"  Saved: {path}")
     return path

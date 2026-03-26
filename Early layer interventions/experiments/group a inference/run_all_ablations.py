@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Run the Group A inference-time head intervention experiments."""
 
 import json
 import os
@@ -42,11 +41,9 @@ HARMFUL_LAYERS   = {0, 2, 5, 6}
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 print(f"Device: {DEVICE}")
-print(f"Results → {RESULTS_DIR}")
 
 
 def load_fresh_model():
-    """Load a fresh frozen model instance."""
     model = TimesformerForVideoClassification.from_pretrained(
         MODEL_DIR, local_files_only=True)
     model.eval()
@@ -57,7 +54,7 @@ def load_fresh_model():
 
 
 def make_head_mask_hook(masked_heads):
-    """Zero out specific head channels in TimesformerSelfAttention output."""
+    # zero out specific head channels in temporal self-attention output
     def hook(module, input, output):
         x = output[0].clone()
         for h in masked_heads:
@@ -67,7 +64,6 @@ def make_head_mask_hook(masked_heads):
 
 
 def register_mask_hooks(model, head_pairs):
-    """Register one masking hook per layer and return the handles."""
     by_layer = {}
     for layer, head in head_pairs:
         by_layer.setdefault(layer, []).append(head)
@@ -75,8 +71,7 @@ def register_mask_hooks(model, head_pairs):
     hs = []
     for layer_idx, heads in by_layer.items():
         mod = model.timesformer.encoder.layer[layer_idx].temporal_attention.attention
-        h = mod.register_forward_hook(make_head_mask_hook(heads))
-        hs.append(h)
+        hs.append(mod.register_forward_hook(make_head_mask_hook(heads)))
     return hs
 
 
@@ -86,7 +81,6 @@ def remove_hooks(hs):
 
 
 def apply_spectral_norm(model, target_layers):
-    """Apply spectral norm to Q, K, V projections in temporal attention."""
     for idx in target_layers:
         mod = model.timesformer.encoder.layer[idx].temporal_attention.attention
         mod.qkv = spectral_norm(mod.qkv)
@@ -102,11 +96,10 @@ def evaluate(model, dataloader, desc=""):
     with torch.no_grad():
         for batch_idx, (videos, labels, sample_indices) in enumerate(dataloader):
             videos = videos.to(DEVICE)
-            outputs = model(pixel_values=videos)
-            probs   = F.softmax(outputs.logits, dim=-1)
+            probs = F.softmax(model(pixel_values=videos).logits, dim=-1)
 
             for prob, label, sidx in zip(probs, labels, sample_indices):
-                sidx  = sidx.item()
+                sidx = sidx.item()
                 label = label.item()
                 prob_buf.setdefault(sidx, []).append(prob.cpu())
                 label_map[sidx] = label
@@ -121,15 +114,14 @@ def evaluate(model, dataloader, desc=""):
     correct_top1 = correct_top5 = 0
     total = len(prob_buf)
     per_cls_ok = {}
-    per_cls_n  = {}
+    per_cls_n = {}
 
     for sidx, prob_list in prob_buf.items():
         avg_prob = torch.stack(prob_list).mean(0)
-        label    = label_map[sidx]
+        label = label_map[sidx]
 
-        per_cls_n[label]   = per_cls_n.get(label, 0) + 1
-        pred = avg_prob.argmax().item()
-        if pred == label:
+        per_cls_n[label] = per_cls_n.get(label, 0) + 1
+        if avg_prob.argmax().item() == label:
             correct_top1 += 1
             per_cls_ok[label] = per_cls_ok.get(label, 0) + 1
         if label in avg_prob.topk(5).indices.tolist():
@@ -137,8 +129,7 @@ def evaluate(model, dataloader, desc=""):
 
     top1 = correct_top1 / total
     top5 = correct_top5 / total
-    per_class = {c: per_cls_ok.get(c, 0) / per_cls_n[c]
-                 for c in per_cls_n}
+    per_class = {c: per_cls_ok.get(c, 0) / per_cls_n[c] for c in per_cls_n}
 
     print(f"  [{desc}] Top-1={top1*100:.2f}%  Top-5={top5*100:.2f}%  "
           f"({time.time()-t0:.0f}s)")
@@ -153,7 +144,7 @@ def save_result(name, result, extra=None):
     path = os.path.join(RESULTS_DIR, f'{name}.json')
     with open(path, 'w') as f:
         json.dump(blob, f, indent=2)
-    print(f"  Saved → {path}")
+    print(f"  Saved: {path}")
 
 
 def load_result(name):
@@ -165,24 +156,23 @@ def load_result(name):
 
 
 def main():
-    print("\nLoading dataset...")
     dataset = SSv2Dataset(
         frames_dir=FRAMES_DIR, test_csv=TEST_CSV,
         num_frames=NUM_FRAMES, num_spatial_crops=NUM_CROPS)
     dataloader = DataLoader(
         dataset, batch_size=BATCH_SIZE, shuffle=False,
         num_workers=NUM_WORKERS, collate_fn=collate_fn, pin_memory=False)
-    print(f"  {len(dataset.samples)} videos × {NUM_CROPS} crops = {len(dataset)} samples")
+    print(f"  {len(dataset.samples)} videos x {NUM_CROPS} crops = {len(dataset)} samples")
 
     res_all = {}
 
     old = load_result('baseline')
     if old:
-        print("\n[Baseline] Skipping — already done")
+        print("\n[Baseline] already done, skipping")
         base_top1 = old['top1']
         res_all['baseline'] = old
     else:
-        print("\n[Baseline] No hooks, unmodified model")
+        print("\n[Baseline] no hooks, unmodified model")
         model = load_fresh_model()
         res = evaluate(model, dataloader, "Baseline")
         save_result('baseline', res)
@@ -191,7 +181,7 @@ def main():
 
     old = load_result('exp1_harmful_masking')
     if old:
-        print("\n[Exp 1] Skipping — already done")
+        print("\n[Exp 1] already done, skipping")
         res_all['exp1'] = old
     else:
         print("\n[Exp 1] Harmful head masking: L5-H2, L2-H1, L6-H7, L0-H4")
@@ -207,7 +197,7 @@ def main():
 
     old = load_result('exp2_negligible_pruning')
     if old:
-        print("\n[Exp 2] Skipping — already done")
+        print("\n[Exp 2] already done, skipping")
         res_all['exp2'] = old
     else:
         print(f"\n[Exp 2] Negligible head pruning: {NEGLIGIBLE_HEADS}")
@@ -223,7 +213,7 @@ def main():
 
     old = load_result('exp1p2_combined_masking')
     if old:
-        print("\n[Exp 1+2] Skipping — already done")
+        print("\n[Exp 1+2] already done, skipping")
         res_all['exp1p2'] = old
     else:
         print("\n[Exp 1+2] Combined masking: 14 heads total")
@@ -240,7 +230,7 @@ def main():
 
     old = load_result('exp4_spectral_norm')
     if old:
-        print("\n[Exp 4] Skipping — already done")
+        print("\n[Exp 4] already done, skipping")
         res_all['exp4'] = old
     else:
         print("\n[Exp 4] Spectral norm on QKV for harmful layers {0,2,5,6}")
@@ -255,7 +245,7 @@ def main():
 
     old = load_result('exp4p1_spectralnorm_masking')
     if old:
-        print("\n[Exp 4+1] Skipping — already done")
+        print("\n[Exp 4+1] already done, skipping")
         res_all['exp4p1'] = old
     else:
         print("\n[Exp 4+1] Spectral norm + harmful head masking")
@@ -273,7 +263,7 @@ def main():
 
     old = load_result('control_a_random4')
     if old:
-        print("\n[Control A] Skipping — already done")
+        print("\n[Control A] already done, skipping")
         res_all['control_a'] = old
     else:
         print("\n[Control A] Random 4 heads masked (3 seeds)")
@@ -291,7 +281,7 @@ def main():
             ctrl_a_runs.append({'seed': seed, 'heads': picked, **res,
                                 'delta_top1': res['top1'] - base_top1})
         ctrl_a_mean = np.mean([r['top1'] for r in ctrl_a_runs])
-        ctrl_a_std  = np.std([r['top1']  for r in ctrl_a_runs])
+        ctrl_a_std = np.std([r['top1'] for r in ctrl_a_runs])
         save_result('control_a_random4', {
             'top1': ctrl_a_mean, 'top5': np.mean([r['top5'] for r in ctrl_a_runs]),
             'top1_std': ctrl_a_std, 'per_class_acc': {},
@@ -302,7 +292,7 @@ def main():
 
     old = load_result('control_b_random10')
     if old:
-        print("\n[Control B] Skipping — already done")
+        print("\n[Control B] already done, skipping")
         res_all['control_b'] = old
     else:
         print("\n[Control B] Random 10 heads masked (3 seeds)")
@@ -320,7 +310,7 @@ def main():
             ctrl_b_runs.append({'seed': seed, 'heads': picked, **res,
                                 'delta_top1': res['top1'] - base_top1})
         ctrl_b_mean = np.mean([r['top1'] for r in ctrl_b_runs])
-        ctrl_b_std  = np.std([r['top1']  for r in ctrl_b_runs])
+        ctrl_b_std = np.std([r['top1'] for r in ctrl_b_runs])
         save_result('control_b_random10', {
             'top1': ctrl_b_mean, 'top5': np.mean([r['top5'] for r in ctrl_b_runs]),
             'top1_std': ctrl_b_std, 'per_class_acc': {},
@@ -329,11 +319,8 @@ def main():
             'delta_top1_mean': ctrl_b_mean - base_top1})
         res_all['control_b'] = {'top1': ctrl_b_mean, 'top1_std': ctrl_b_std}
 
-    print("\n" + "=" * 65)
-    print("  GROUP A SUMMARY")
-    print("=" * 65)
-    print(f"  {'Experiment':<30} {'Top-1':>8}  {'Δ vs Baseline':>14}")
-    print("-" * 65)
+    print("\nGROUP A SUMMARY")
+    print(f"  {'Experiment':<30} {'Top-1':>8}  {'Delta':>14}")
     names = [
         ('Baseline',        'baseline',   None),
         ('Exp 1 Harmful',   'exp1',       base_top1),
@@ -344,19 +331,18 @@ def main():
     ]
     for label, key, base in names:
         r = res_all[key]
-        delta = f"{(r['top1']-base)*100:+.2f}%" if base else "—"
+        delta = f"{(r['top1']-base)*100:+.2f}%" if base else ""
         print(f"  {label:<30} {r['top1']*100:>7.2f}%  {delta:>14}")
     ca = res_all['control_a']
     cb = res_all['control_b']
-    print(f"  {'Ctrl A Rnd4 (mean±std)':<30} {ca['top1']*100:>7.2f}% ±{ca['top1_std']*100:.2f}%")
-    print(f"  {'Ctrl B Rnd10 (mean±std)':<30} {cb['top1']*100:>7.2f}% ±{cb['top1_std']*100:.2f}%")
-    print("=" * 65)
+    print(f"  {'Ctrl A Rnd4 (mean+-std)':<30} {ca['top1']*100:>7.2f}% +-{ca['top1_std']*100:.2f}%")
+    print(f"  {'Ctrl B Rnd10 (mean+-std)':<30} {cb['top1']*100:>7.2f}% +-{cb['top1_std']*100:.2f}%")
 
     summary_path = os.path.join(RESULTS_DIR, 'group_a_summary.json')
     with open(summary_path, 'w') as f:
         json.dump({'baseline_top1': base_top1, 'experiments': {
             k: {'top1': v['top1']} for k, v in res_all.items()}}, f, indent=2)
-    print(f"\nSummary → {summary_path}")
+    print(f"\nSummary: {summary_path}")
 
 
 if __name__ == '__main__':

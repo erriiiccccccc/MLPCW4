@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Run Exp 3 and its uniform-weight-decay control."""
 
 import os
 import sys
@@ -20,6 +19,7 @@ def build_param_groups(model, use_shapley_wd):
     for idx, block in enumerate(model.timesformer.encoder.layer):
         if use_shapley_wd:
             s = SHAPLEY_SUMS[idx]
+            # low shapley = weak layer -> more regularization, high shapley = strong -> less
             wd = BASE_WD * 3.0 if s < 0.06 else (BASE_WD * 0.3 if s > 0.15 else BASE_WD)
         else:
             wd = BASE_WD
@@ -38,9 +38,9 @@ def build_param_groups(model, use_shapley_wd):
 
 def train(model, train_loader, use_shapley_wd, exp_name):
     param_groups = build_param_groups(model, use_shapley_wd)
-    optimizer    = torch.optim.AdamW(param_groups)
-    scheduler    = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
-    criterion    = nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(param_groups)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+    criterion = nn.CrossEntropyLoss()
 
     if use_shapley_wd:
         wd_per_layer = {idx: (BASE_WD*3 if SHAPLEY_SUMS[idx]<0.06
@@ -60,16 +60,16 @@ def train(model, train_loader, use_shapley_wd, exp_name):
 
         for batch_idx, (pixel_values, labels) in enumerate(train_loader):
             pixel_values = pixel_values.to(DEVICE)
-            labels       = labels.to(DEVICE)
+            labels = labels.to(DEVICE)
             optimizer.zero_grad()
             logits = model(pixel_values=pixel_values).logits
-            loss   = criterion(logits, labels)
+            loss = criterion(logits, labels)
             loss.backward()
             optimizer.step()
 
             epoch_loss += loss.item()
-            correct    += (logits.argmax(1) == labels).sum().item()
-            total      += labels.size(0)
+            correct += (logits.argmax(1) == labels).sum().item()
+            total += labels.size(0)
 
             if batch_idx % 100 == 0:
                 print(f"  [{exp_name}] Epoch {epoch+1}/{EPOCHS} | "
@@ -78,10 +78,10 @@ def train(model, train_loader, use_shapley_wd, exp_name):
 
         scheduler.step()
         avg_loss = epoch_loss / len(train_loader)
-        acc      = correct / total
-        elapsed  = time.time() - t0
+        acc = correct / total
+        elapsed = time.time() - t0
         history.append({'epoch': epoch+1, 'loss': avg_loss, 'train_acc': acc})
-        print(f"  [{exp_name}] Epoch {epoch+1} done | "
+        print(f"  [{exp_name}] Epoch {epoch+1} | "
               f"Loss={avg_loss:.4f} | TrainAcc={acc:.4f} | {elapsed:.0f}s")
 
     return history
@@ -90,14 +90,11 @@ def train(model, train_loader, use_shapley_wd, exp_name):
 def main():
     train_loader = make_train_loader()
 
-    print("\n" + "="*60)
-    print("Exp 3: Differential (Shapley-scaled) weight decay")
-    print("="*60)
+    print("\nExp 3: Differential (Shapley-scaled) weight decay")
     model = load_model()
     freeze_all(model)
     unfreeze_temporal(model)
     history3 = train(model, train_loader, use_shapley_wd=True, exp_name="Exp3")
-    print("\n  Evaluating Exp 3...")
     res3 = evaluate(model, desc="Exp3")
     save_result('exp3_diff_wd', res3, {
         'history': history3,
@@ -106,14 +103,11 @@ def main():
     })
     del model
 
-    print("\n" + "="*60)
-    print("Exp 3-ctrl: Uniform weight decay (control)")
-    print("="*60)
+    print("\nExp 3-ctrl: Uniform weight decay (control)")
     model_ctrl = load_model()
     freeze_all(model_ctrl)
     unfreeze_temporal(model_ctrl)
     history_ctrl = train(model_ctrl, train_loader, use_shapley_wd=False, exp_name="Exp3-ctrl")
-    print("\n  Evaluating Exp 3-ctrl...")
     res_ctrl = evaluate(model_ctrl, desc="Exp3-ctrl")
     save_result('exp3_ctrl_uniform_wd', res_ctrl, {
         'history': history_ctrl,
@@ -121,12 +115,9 @@ def main():
                    'base_lr': BASE_LR, 'epochs': EPOCHS, 'train_subset': 0.15}
     })
 
-    print("\n" + "="*60)
-    print("EXP 3 RESULTS")
-    print("="*60)
-    print(f"  Exp 3 (Shapley WD): Top-1={res3['top1']*100:.2f}%  Top-5={res3['top5']*100:.2f}%")
-    print(f"  Exp 3 ctrl (Unif): Top-1={res_ctrl['top1']*100:.2f}%  Top-5={res_ctrl['top5']*100:.2f}%")
-    print(f"  Delta: {(res3['top1']-res_ctrl['top1'])*100:+.2f}%")
+    print(f"\nExp 3 (Shapley WD): Top-1={res3['top1']*100:.2f}%  Top-5={res3['top5']*100:.2f}%")
+    print(f"Exp 3 ctrl (Unif): Top-1={res_ctrl['top1']*100:.2f}%  Top-5={res_ctrl['top5']*100:.2f}%")
+    print(f"Delta: {(res3['top1']-res_ctrl['top1'])*100:+.2f}%", flush=True)
 
 
 if __name__ == '__main__':

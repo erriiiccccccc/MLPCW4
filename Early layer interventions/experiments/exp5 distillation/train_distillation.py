@@ -1,5 +1,3 @@
-"""Run temporal-attention distillation and its CE-only control."""
-
 import os
 import sys
 import time
@@ -58,8 +56,7 @@ def train(model, loader, use_distil, name):
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=EPOCHS)
     ce_fn = nn.CrossEntropyLoss()
 
-    all_layers = TEACHER_LAYERS | STUDENT_LAYERS
-    captured, hooks = setup_hooks(model, all_layers)
+    captured, hooks = setup_hooks(model, TEACHER_LAYERS | STUDENT_LAYERS)
 
     model.eval()
     history = []
@@ -110,14 +107,11 @@ def train(model, loader, use_distil, name):
 def main():
     loader = make_train_loader()
 
-    print("\n" + "="*60)
-    print("Exp 5: distillation (teacher L10/L11 -> student L1/L2/L5/L7)")
-    print("="*60)
+    print("\nExp 5: distillation (teacher L10/L11 -> student L1/L2/L5/L7)")
     m5 = load_model()
     freeze_all(m5)
     unfreeze_temporal(m5)
     hist5 = train(m5, loader, use_distil=True, name="Exp5")
-    print("  Evaluating...")
     res5 = evaluate(m5, desc="Exp5")
     save_result('exp5_distillation', res5, {
         'history': hist5,
@@ -128,14 +122,11 @@ def main():
     })
     del m5
 
-    print("\n" + "="*60)
-    print("Exp 5-ctrl: CE-only (no distillation)")
-    print("="*60)
+    print("\nExp 5-ctrl: CE-only (no distillation)")
     mc = load_model()
     freeze_all(mc)
     unfreeze_temporal(mc)
     hist_c = train(mc, loader, use_distil=False, name="Exp5-ctrl")
-    print("  Evaluating...")
     res_c = evaluate(mc, desc="Exp5-ctrl")
     save_result('exp5_ctrl_ce_only', res_c, {
         'history': hist_c,
@@ -145,7 +136,7 @@ def main():
 
     print(f"\nExp5 distil: top1={res5['top1']*100:.2f}% top5={res5['top5']*100:.2f}%")
     print(f"Exp5 ctrl:   top1={res_c['top1']*100:.2f}% top5={res_c['top5']*100:.2f}%")
-    print(f"Delta: {(res5['top1']-res_c['top1'])*100:+.2f}%")
+    print(f"Delta: {(res5['top1']-res_c['top1'])*100:+.2f}%", flush=True)
 
 
 if __name__ == '__main__':

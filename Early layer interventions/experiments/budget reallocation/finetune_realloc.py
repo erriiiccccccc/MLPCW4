@@ -1,5 +1,3 @@
-"""Reallocate early-layer temporal heads and fine-tune a concat head."""
-
 import argparse
 import json
 import os
@@ -55,7 +53,7 @@ def process_frame(img, normalize, crop=224):
 
 def collect_attn_weights(model, frames_dir, train_csv, dev,
                          n_videos=50, n_frames=8, target_layers=[0,1,2,3]):
-    print(f"Calibration: collecting attn weights from {n_videos} videos...")
+    print(f"Calibration: collecting attn weights from {n_videos} videos")
 
     samples = []
     with open(train_csv, 'r') as f:
@@ -156,7 +154,7 @@ def identify_heads(sp_avg, tp_avg, target_layers, random_control=False):
 
 
 def reallocate_heads(model, hmap):
-    print("Reallocating heads nowwww")
+    # copy spatial head weights into temporal head slots
     for l, (sem_h, tmp_h) in hmap.items():
         sp_qkv = model.timesformer.encoder.layer[l].attention.attention.qkv
         tp_qkv = model.timesformer.encoder.layer[l].temporal_attention.attention.qkv
@@ -183,7 +181,6 @@ def reallocate_heads(model, hmap):
                 tp_qkv.bias[tv].copy_(sp_qkv.bias[sv])
 
         print(f"Layer {l}: spatial head {sem_h} -> temporal head {tmp_h}")
-    print("Done")
 
 
 class ConcatHead(nn.Module):
@@ -227,7 +224,7 @@ class SSv2Dataset(Dataset):
                 parts = line.strip().split()
                 if len(parts) >= 3:
                     self.samples.append((parts[0], int(parts[1]), int(parts[2])))
-        print(f"Loaded {len(self.samples)} training samples")
+        print(f"{len(self.samples)} training samples")
         self.normalize = lambda t: (t - torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)) \
                                     / torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
@@ -292,11 +289,9 @@ def main():
     dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {dev}")
 
-    print("Loading model...")
     base = TimesformerForVideoClassification.from_pretrained(args.model_dir, local_files_only=True)
     base = base.to(dev)
 
-    # calibration + head id + reallocation
     tgt_layers = [0, 1, 2, 3]
     sp_avg, tp_avg = collect_attn_weights(
         base, args.frames_dir, args.train_csv, dev,
@@ -316,7 +311,6 @@ def main():
     optim = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=0.05)
     sched = CosineAnnealingLR(optim, T_max=args.epochs)
 
-    # resume if checkpoint exists
     start_ep = 1
     best_loss = float('inf')
     ckpts = sorted([f for f in os.listdir(args.output_dir) if f.startswith('epoch_') and f.endswith('.pt')])
@@ -353,7 +347,7 @@ def main():
 
     with open(os.path.join(args.output_dir, 'history.json'), 'w') as f:
         json.dump(history, f, indent=2)
-    print(f"\nDone. Best loss: {best_loss:.4f}")
+    print(f"\nBest loss: {best_loss:.4f}", flush=True)
 
 
 if __name__ == '__main__':

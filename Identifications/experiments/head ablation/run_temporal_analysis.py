@@ -1,5 +1,3 @@
-"""Run the temporal-analysis pipeline."""
-
 import json
 import time
 import argparse
@@ -8,38 +6,23 @@ from typing import List, Optional
 
 
 def run_pipeline(
-    phases: List[int],
-    ssv2_root_dir: str,
-    num_videos: int = 20,
-    num_permutations: int = 200,
-    layers: Optional[List[int]] = None,
-    batch_size: int = 2,
-    output_dir: str = "outputs/temporal_analysis",
-    data_split: str = "val",
-    model_name: Optional[str] = None,
-) -> dict:
-    """Run the requested analysis phases and write the combined summary."""
+    phases, ssv2_root_dir,
+    num_videos=20, num_permutations=200,
+    layers=None, batch_size=2,
+    output_dir="outputs/temporal_analysis",
+    data_split="val", model_name=None,
+):
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    data_kwargs = dict(
-        ssv2_root_dir=ssv2_root_dir,
-        data_split=data_split,
-    )
+    data_kwargs = dict(ssv2_root_dir=ssv2_root_dir, data_split=data_split)
     if model_name:
         data_kwargs["model_name"] = model_name
 
-    print("=" * 60)
-    print("  TimeSformer Temporal Head Analysis Pipeline")
-    print("=" * 60)
-    print(f"  Phases: {phases}")
-    print(f"  Videos: {num_videos}")
-    print(f"  Permutations: {num_permutations}")
-    print(f"  Layers: {layers or 'all 12'}")
-    print(f"  Data: SSv2 ({ssv2_root_dir})")
-    print(f"  Split: {data_split}")
-    print(f"  Output: {output_path}")
-    print()
+    print(f"TimeSformer Temporal Head Analysis Pipeline")
+    print(f"  Phases: {phases}, Videos: {num_videos}, Perms: {num_permutations}")
+    print(f"  Layers: {layers or 'all 12'}, Data: SSv2 ({ssv2_root_dir})")
+    print(f"  Split: {data_split}, Output: {output_path}")
 
     start_time = time.time()
     summary = {
@@ -53,18 +36,14 @@ def run_pipeline(
     }
 
     if 1 in phases:
-        print("\n" + "=" * 60)
-        print("  PHASE 1: Shapley Value Computation")
-        print("=" * 60)
+        print("\nPHASE 1: Shapley Value Computation")
         from shapley_importance import run_shapley
 
         shapley_df = run_shapley(
             num_videos=num_videos,
             num_permutations=num_permutations,
-            layers=layers,
-            batch_size=batch_size,
-            output_dir=output_dir,
-            **data_kwargs,
+            layers=layers, batch_size=batch_size,
+            output_dir=output_dir, **data_kwargs,
         )
         summary["shapley"] = {
             "heads_computed": len(shapley_df),
@@ -74,16 +53,12 @@ def run_pipeline(
         }
 
     if 2 in phases:
-        print("\n" + "=" * 60)
-        print("  PHASE 2: Temporal Semantic Analysis")
-        print("=" * 60)
+        print("\nPHASE 2: Temporal Semantic Analysis")
         from temporal_semantics import run_temporal_semantics
 
         sem_results = run_temporal_semantics(
-            num_videos=num_videos,
-            batch_size=batch_size,
-            output_dir=output_dir,
-            **data_kwargs,
+            num_videos=num_videos, batch_size=batch_size,
+            output_dir=output_dir, **data_kwargs,
         )
         if "combined" in sem_results:
             combined = sem_results["combined"]
@@ -99,9 +74,7 @@ def run_pipeline(
             }
 
     if 3 in phases:
-        print("\n" + "=" * 60)
-        print("  PHASE 3: Training Recommendations")
-        print("=" * 60)
+        print("\nPHASE 3: Training Recommendations")
         from training_recommendations import run_training_recommendations
 
         rec_results = run_training_recommendations(
@@ -125,29 +98,20 @@ def run_pipeline(
             )
 
     if 4 in phases:
-        print("\n" + "=" * 60)
-        print("  PHASE 4: Visualizations")
-        print("=" * 60)
+        print("\nPHASE 4: Visualizations")
         from visualize_temporal import run_all_visualizations
-
         run_all_visualizations(output_dir=output_dir)
 
     if 5 in phases:
-        print("\n" + "=" * 60)
-        print("  PHASE 5: Downstream Propagation Analysis")
-        print("=" * 60)
+        print("\nPHASE 5: Downstream Propagation Analysis")
         from downstream_propagation import run_downstream_propagation
 
         prop_df = run_downstream_propagation(
-            num_videos=num_videos,
-            source_layers=layers,
-            batch_size=batch_size,
-            output_dir=output_dir,
+            num_videos=num_videos, source_layers=layers,
+            batch_size=batch_size, output_dir=output_dir,
             **data_kwargs,
         )
-        downstream_only = prop_df[
-            prop_df["target_layer"] > prop_df["source_layer"]
-        ]
+        downstream_only = prop_df[prop_df["target_layer"] > prop_df["source_layer"]]
         summary["propagation"] = {
             "total_entries": len(prop_df),
             "mean_downstream_cosine": float(
@@ -165,39 +129,27 @@ def run_pipeline(
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    print(f"\n{'=' * 60}")
-    print(f"  PIPELINE COMPLETE — {elapsed:.1f}s ({elapsed/60:.1f} min)")
-    print(f"{'=' * 60}")
-    print(f"\nSummary saved to {summary_path}")
+    print(f"\nPIPELINE done in {elapsed:.1f}s ({elapsed/60:.1f} min)")
+    print(f"Summary saved to {summary_path}")
 
     print(f"\nOutput files in {output_path}:")
     for p in sorted(output_path.iterdir()):
-        size_kb = p.stat().st_size / 1024
-        print(f"  {p.name} ({size_kb:.1f} KB)")
+        print(f"  {p.name} ({p.stat().st_size / 1024:.1f} KB)")
 
     return summary
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Run TimeSformer temporal head analysis pipeline"
-    )
-    parser.add_argument("--ssv2_root_dir", type=str, required=True,
-                        help="Path to evaluation_frames/ directory")
-    parser.add_argument("--phases", type=int, nargs="+", default=[1, 2, 3, 4, 5],
-                        help="Phases to run: 1=Shapley, 2=Semantics, "
-                             "3=Recommendations, 4=Visualizations, "
-                             "5=Propagation")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ssv2_root_dir", type=str, required=True)
+    parser.add_argument("--phases", type=int, nargs="+", default=[1, 2, 3, 4, 5])
     parser.add_argument("--num_videos", type=int, default=20)
     parser.add_argument("--num_permutations", type=int, default=200)
     parser.add_argument("--layers", type=int, nargs="*", default=None)
     parser.add_argument("--batch_size", type=int, default=2)
-    parser.add_argument("--output_dir", type=str,
-                        default="outputs/temporal_analysis")
-    parser.add_argument("--data_split", type=str, default="val",
-                        help="Dataset split (test, val, train)")
-    parser.add_argument("--model_name", type=str, default=None,
-                        help="Model name or local path (default: config.py default)")
+    parser.add_argument("--output_dir", type=str, default="outputs/temporal_analysis")
+    parser.add_argument("--data_split", type=str, default="val")
+    parser.add_argument("--model_name", type=str, default=None)
     args = parser.parse_args()
 
     run_pipeline(

@@ -1,5 +1,3 @@
-"""Run the SSv2 head-ablation sweep."""
-
 import json
 import time
 import argparse
@@ -22,18 +20,15 @@ from visualize import (plot_ablation_heatmaps, plot_importance_heatmaps,
 
 @torch.no_grad()
 def get_baseline_predictions(model, dataloader, device):
-    """Get baseline predictions and logits for all videos."""
     all_logits = []
     all_preds = []
     model.eval()
 
     for pixel_values, labels in tqdm(dataloader, desc="Baseline predictions"):
         pixel_values = pixel_values.to(device)
-        outputs = model(pixel_values=pixel_values)
-        logits = outputs.logits.cpu()
-        preds = logits.argmax(dim=-1)
+        logits = model(pixel_values=pixel_values).logits.cpu()
         all_logits.append(logits)
-        all_preds.append(preds)
+        all_preds.append(logits.argmax(dim=-1))
 
     return torch.cat(all_logits, dim=0), torch.cat(all_preds, dim=0)
 
@@ -41,18 +36,15 @@ def get_baseline_predictions(model, dataloader, device):
 @torch.no_grad()
 def evaluate_with_consistency(model, dataloader, baseline_preds,
                               baseline_logits, device):
-    """Evaluate ablated model using prediction consistency metrics."""
     all_logits = []
     all_preds = []
     model.eval()
 
     for pixel_values, labels in dataloader:
         pixel_values = pixel_values.to(device)
-        outputs = model(pixel_values=pixel_values)
-        logits = outputs.logits.cpu()
-        preds = logits.argmax(dim=-1)
+        logits = model(pixel_values=pixel_values).logits.cpu()
         all_logits.append(logits)
-        all_preds.append(preds)
+        all_preds.append(logits.argmax(dim=-1))
 
     ablated_logits = torch.cat(all_logits, dim=0)
     ablated_preds = torch.cat(all_preds, dim=0)
@@ -73,22 +65,17 @@ def evaluate_with_consistency(model, dataloader, baseline_preds,
     for i in range(n):
         r = np.corrcoef(bl[i], ab[i])[0, 1]
         corrs.append(r if not np.isnan(r) else 1.0)
-    mean_corr = np.mean(corrs)
 
     return {
         "flip_rate": flips,
         "kl_divergence": kl_div,
-        "logit_correlation": mean_corr,
+        "logit_correlation": np.mean(corrs),
     }
 
 
-def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
-                      num_videos: int = 100, batch_size: int = 2,
-                      model_name: str = None):
-    """Full ablation pipeline on SSv2 videos."""
-    print("=" * 60)
-    print("  TimeSformer Head Ablation on SSv2")
-    print("=" * 60)
+def run_ssv2_ablation(ssv2_root_dir, data_split="val",
+                      num_videos=100, batch_size=2, model_name=None):
+    print("TimeSformer Head Ablation on SSv2")
 
     config_kwargs = dict(
         ssv2_root_dir=ssv2_root_dir,
@@ -110,9 +97,7 @@ def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
     print(f"\nLoading SSv2 videos ({data_split} split)...")
     dataloader = create_dataloader_from_config(config, processor=processor)
 
-    print("\n" + "=" * 40)
-    print("PHASE 1: Getting Baseline Predictions")
-    print("=" * 40)
+    print("\nPHASE 1: Getting Baseline Predictions")
     baseline_logits, baseline_preds = get_baseline_predictions(
         model, dataloader, config.device
     )
@@ -126,9 +111,7 @@ def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
         label = model.config.id2label.get(cls_id, f"class_{cls_id}")
         print(f"  {label}: {count} videos")
 
-    print("\n" + "=" * 40)
-    print("PHASE 2: Head Ablation Sweep")
-    print("=" * 40)
+    print("\nPHASE 2: Head Ablation Sweep")
 
     target_layers = [0, 3, 6, 9, 11]
     results = []
@@ -157,7 +140,7 @@ def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
 
                 hook.remove()
 
-                result = {
+                results.append({
                     "layer": layer_idx,
                     "attn_type": attn_type,
                     "head": head_idx,
@@ -165,8 +148,7 @@ def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
                     "kl_divergence": metrics["kl_divergence"],
                     "logit_correlation": metrics["logit_correlation"],
                     "acc_drop": metrics["flip_rate"],
-                }
-                results.append(result)
+                })
 
                 if count % 12 == 0 or count <= 3:
                     print(f"[{count}/{total}] L{layer_idx}-"
@@ -180,9 +162,7 @@ def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
     df.to_csv(csv_path, index=False)
     print(f"\nResults saved to {csv_path}")
 
-    print("\n" + "=" * 40)
-    print("ABLATION SUMMARY (SSv2)")
-    print("=" * 40)
+    print("\nABLATION SUMMARY (SSv2)")
 
     for attn_type in ["temporal", "spatial"]:
         subset = df[df["attn_type"] == attn_type]
@@ -192,22 +172,18 @@ def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
         print(f"  Mean KL divergence:  {subset['kl_divergence'].mean():.4f}")
         print(f"  Mean logit corr:     {subset['logit_correlation'].mean():.4f}")
         top3 = subset.nlargest(3, "flip_rate")
-        print(f"  Top-3 most impactful heads:")
+        print(f"  Top-3 most impactful:")
         for _, row in top3.iterrows():
             print(f"    L{int(row['layer'])}-H{int(row['head'])}: "
                   f"flip={row['flip_rate']:.3f}, "
                   f"KL={row['kl_divergence']:.4f}")
 
-    print("\n" + "=" * 40)
-    print("PHASE 3: Gradient-Based Importance")
-    print("=" * 40)
+    print("\nPHASE 3: Gradient-Based Importance")
     importance_df = compute_gradient_importance(
         model, dataloader, config, num_batches=config.grad_num_batches
     )
 
-    print("\n" + "=" * 40)
-    print("PHASE 4: Generating Visualizations")
-    print("=" * 40)
+    print("\nPHASE 4: Generating Visualizations")
 
     plot_ablation_heatmaps(df, config, metric="flip_rate")
     plot_layer_importance(df, config)
@@ -216,10 +192,8 @@ def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
     plot_importance_heatmaps(importance_df, config)
 
     elapsed = time.time() - start_time
-    print("\n" + "=" * 60)
-    print(f"COMPLETE — {elapsed:.1f}s ({elapsed/60:.1f} min)")
+    print(f"\nDone in {elapsed:.1f}s ({elapsed/60:.1f} min)")
     print(f"Tested {len(df)} heads on {n_videos} SSv2 videos")
-    print("=" * 60)
 
     summary = {
         "dataset": f"SSv2 ({data_split} split)",
@@ -241,18 +215,12 @@ def run_ssv2_ablation(ssv2_root_dir: str, data_split: str = "val",
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Run TimeSformer head ablation on SSv2 dataset"
-    )
-    parser.add_argument("--ssv2_root_dir", type=str, required=True,
-                        help="Path to evaluation_frames/ directory")
-    parser.add_argument("--data_split", type=str, default="val",
-                        help="Dataset split (train, val, test)")
-    parser.add_argument("--num_videos", type=int, default=100,
-                        help="Number of videos to evaluate")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ssv2_root_dir", type=str, required=True)
+    parser.add_argument("--data_split", type=str, default="val")
+    parser.add_argument("--num_videos", type=int, default=100)
     parser.add_argument("--batch_size", type=int, default=2)
-    parser.add_argument("--model_name", type=str, default=None,
-                        help="Model name or local path (default: config.py default)")
+    parser.add_argument("--model_name", type=str, default=None)
     args = parser.parse_args()
 
     run_ssv2_ablation(

@@ -1,5 +1,3 @@
-"""Search C for the concatenated last-four-layer probe."""
-
 import numpy as np
 import os
 from sklearn.linear_model import LogisticRegression
@@ -7,9 +5,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 
 PROBE_DIR = "/home/s2411221/probe_results"
-LAYERS    = [8, 9, 10, 11]
+LAYERS = [8, 9, 10, 11]
 
-print("Loading embeddings...")
 train_bits, test_bits = [], []
 for l in LAYERS:
     d = os.path.join(PROBE_DIR, f"layer_{l:02d}")
@@ -17,27 +14,29 @@ for l in LAYERS:
     test_bits.append(np.load(os.path.join(d, "test_embeddings.npy")))
 
 train_labels = np.load(os.path.join(PROBE_DIR, "layer_11", "labels.npy"))
-test_labels  = np.load(os.path.join(PROBE_DIR, "layer_11", "test_labels.npy"))
+test_labels = np.load(os.path.join(PROBE_DIR, "layer_11", "test_labels.npy"))
 
+# per-layer scaling: scale each layer independently then concat
 train_by_layer, test_by_layer = [], []
 for tr, te in zip(train_bits, test_bits):
     sc = StandardScaler()
     train_by_layer.append(sc.fit_transform(tr))
     test_by_layer.append(sc.transform(te))
 x_train_perlayer = np.concatenate(train_by_layer, axis=1)
-x_test_perlayer  = np.concatenate(test_by_layer,  axis=1)
+x_test_perlayer = np.concatenate(test_by_layer, axis=1)
 
+# global scaling: concat raw then scale everything at once
 x_train_raw = np.concatenate(train_bits, axis=1)
-x_test_raw  = np.concatenate(test_bits,  axis=1)
+x_test_raw = np.concatenate(test_bits, axis=1)
 sc_global = StandardScaler()
 x_train_global = sc_global.fit_transform(x_train_raw)
-x_test_global  = sc_global.transform(x_test_raw)
+x_test_global = sc_global.transform(x_test_raw)
 
 C_values = [0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0]
 
 configs = [
     ("per-layer scale", x_train_perlayer, x_test_perlayer),
-    ("global scale",    x_train_global,   x_test_global),
+    ("global scale", x_train_global, x_test_global),
 ]
 
 print(f"\n{'Config':<20} {'C':<8} {'Test Acc':>10}")

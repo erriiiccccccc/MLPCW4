@@ -6,6 +6,31 @@
   <component name="ChangeListManager">
     <list default="true" id="07c5752e-fd79-4191-abec-4bd903fc3774" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Early layer interventions/experiments/budget reallocation/finetune_realloc.py" beforeDir="false" afterPath="$PROJECT_DIR$/Early layer interventions/experiments/budget reallocation/finetune_realloc.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Early layer interventions/experiments/exp3 diff wd/train_diff_wd.py" beforeDir="false" afterPath="$PROJECT_DIR$/Early layer interventions/experiments/exp3 diff wd/train_diff_wd.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Early layer interventions/experiments/exp3p5 combined/train_combined.py" beforeDir="false" afterPath="$PROJECT_DIR$/Early layer interventions/experiments/exp3p5 combined/train_combined.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Early layer interventions/experiments/exp5 distillation/train_distillation.py" beforeDir="false" afterPath="$PROJECT_DIR$/Early layer interventions/experiments/exp5 distillation/train_distillation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Early layer interventions/experiments/group a inference/run_all_ablations.py" beforeDir="false" afterPath="$PROJECT_DIR$/Early layer interventions/experiments/group a inference/run_all_ablations.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Early layer interventions/experiments/shared.py" beforeDir="false" afterPath="$PROJECT_DIR$/Early layer interventions/experiments/shared.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/causal tracing/causal_tracing.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/causal tracing/causal_tracing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/ablation.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/ablation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/baseline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/conftest.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/conftest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/downstream_propagation.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/downstream_propagation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/gradient_importance.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/gradient_importance.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/real_video_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/real_video_loader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/run_real_videos.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/run_real_videos.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/run_temporal_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/run_temporal_analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/shapley_importance.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/shapley_importance.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/temporal_semantics.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/temporal_semantics.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Identifications/experiments/head ablation/training_recommendations.py" beforeDir="false" afterPath="$PROJECT_DIR$/Identifications/experiments/head ablation/training_recommendations.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Last layer evaluation/experiments/concat last 4/concat_eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/Last layer evaluation/experiments/concat last 4/concat_eval.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Last layer evaluation/experiments/hyperparam search/baseline_hyperparam_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/Last layer evaluation/experiments/hyperparam search/baseline_hyperparam_search.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Last layer evaluation/experiments/hyperparam search/concat_hyperparam_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/Last layer evaluation/experiments/hyperparam search/concat_hyperparam_search.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Last layer evaluation/experiments/hyperparam search/learned_hyperparam_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/Last layer evaluation/experiments/hyperparam search/learned_hyperparam_search.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Last layer evaluation/experiments/hyperparam search/shapley_hyperparam_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/Last layer evaluation/experiments/hyperparam search/shapley_hyperparam_search.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Last layer evaluation/experiments/learned last 4/learned_weighted_eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/Last layer evaluation/experiments/learned last 4/learned_weighted_eval.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Last layer evaluation/experiments/shapley last 4/shapley_weighted_eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/Last layer evaluation/experiments/shapley last 4/shapley_weighted_eval.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -48,25 +73,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;ai.playground.ignore.import.keys.banner.in.settings&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/faizluqman/PycharmProjects/MLPCW4/Identifications&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ai.playground.ignore.import.keys.banner.in.settings": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/faizluqman/PycharmProjects/MLPCW4/Identifications",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/Identifications" />
@@ -97,7 +123,7 @@
       <updated>1774358406691</updated>
       <workItem from="1774358410493" duration="5627000" />
       <workItem from="1774526501756" duration="3335000" />
-      <workItem from="1774537874311" duration="1669000" />
+      <workItem from="1774537874311" duration="3395000" />
     </task>
     <servers />
   </component>

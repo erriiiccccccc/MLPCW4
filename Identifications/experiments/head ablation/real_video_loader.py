@@ -1,5 +1,3 @@
-"""SSv2 dataloader for pre-extracted frame directories."""
-
 import os
 import numpy as np
 import torch
@@ -9,15 +7,7 @@ from typing import List, Tuple
 
 
 class SSv2Dataset(Dataset):
-    """Load pre-extracted SSv2 frames from the CSV lists."""
-
-    def __init__(
-        self,
-        root_dir: str,
-        split: str = "val",
-        num_frames: int = 8,
-        processor=None,
-    ):
+    def __init__(self, root_dir, split="val", num_frames=8, processor=None):
         self.frames_dir = os.path.join(root_dir, "frames")
         self.num_frames = num_frames
         self.processor = processor
@@ -29,7 +19,7 @@ class SSv2Dataset(Dataset):
                 f"Expected CSV files in {root_dir}/frame_lists/"
             )
 
-        self.samples: List[Tuple[str, int, int]] = []
+        self.samples = []
         skipped = 0
         with open(csv_path) as f:
             for line in f:
@@ -43,11 +33,10 @@ class SSv2Dataset(Dataset):
 
         print(
             f"SSv2 [{split}]: {len(self.samples)} videos loaded"
-            + (f" ({skipped} skipped — malformed lines)" if skipped else "")
+            + (f" ({skipped} skipped)" if skipped else "")
         )
 
-    def _load_frames(self, video_dir: str, n_frames_on_disk: int) -> List[np.ndarray]:
-        """Load frames using the CSV count before falling back to `listdir`."""
+    def _load_frames(self, video_dir, n_frames_on_disk):
         frames = []
         for i in range(1, n_frames_on_disk + 1):
             fpath = os.path.join(video_dir, f"{i:05d}.jpg")
@@ -57,7 +46,8 @@ class SSv2Dataset(Dataset):
             except (FileNotFoundError, OSError):
                 break
 
-        if len(frames) == 0:
+        # fallback: try listing directory
+        if not frames:
             if os.path.isdir(video_dir):
                 frame_files = sorted(
                     f for f in os.listdir(video_dir)
@@ -76,7 +66,7 @@ class SSv2Dataset(Dataset):
         video_dir, n_frames_on_disk, label = self.samples[idx]
         frames = self._load_frames(video_dir, n_frames_on_disk)
 
-        if len(frames) == 0:
+        if not frames:
             dummy = np.zeros((self.num_frames, 224, 224, 3), dtype=np.uint8)
             frames = [dummy[i] for i in range(self.num_frames)]
 
@@ -99,32 +89,19 @@ class SSv2Dataset(Dataset):
         return pixel_values, label
 
 
-def create_ssv2_dataloader(
-    root_dir: str,
-    split: str = "val",
-    num_frames: int = 8,
-    batch_size: int = 2,
-    num_workers: int = 0,
-    processor=None,
-) -> DataLoader:
-    """Create DataLoader for SSv2 pre-extracted frames."""
+def create_ssv2_dataloader(root_dir, split="val", num_frames=8,
+                           batch_size=2, num_workers=0, processor=None):
     dataset = SSv2Dataset(
-        root_dir=root_dir,
-        split=split,
-        num_frames=num_frames,
-        processor=processor,
+        root_dir=root_dir, split=split,
+        num_frames=num_frames, processor=processor,
     )
     return DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True,
+        dataset, batch_size=batch_size, shuffle=False,
+        num_workers=num_workers, pin_memory=True,
     )
 
 
-def create_dataloader_from_config(config, processor=None) -> DataLoader:
-    """Create an SSv2 dataloader from `AblationConfig`."""
+def create_dataloader_from_config(config, processor=None):
     if not config.ssv2_root_dir:
         raise ValueError(
             "ssv2_root_dir must be set in AblationConfig "
@@ -136,14 +113,10 @@ def create_dataloader_from_config(config, processor=None) -> DataLoader:
         num_frames=config.num_frames,
         processor=processor,
     )
-    full_size = len(dataset)
-    if config.num_eval_videos < full_size:
+    if config.num_eval_videos < len(dataset):
         dataset = Subset(dataset, list(range(config.num_eval_videos)))
-        print(f"Subset to {config.num_eval_videos} videos (from {full_size})")
+        print(f"Subset to {config.num_eval_videos} videos (from {len(dataset)})")
     return DataLoader(
-        dataset,
-        batch_size=config.batch_size,
-        shuffle=False,
-        num_workers=config.num_workers,
-        pin_memory=True,
+        dataset, batch_size=config.batch_size, shuffle=False,
+        num_workers=config.num_workers, pin_memory=True,
     )

@@ -1,5 +1,3 @@
-"""Run causal tracing on TimeSformer temporal attention layers."""
-
 import argparse
 import json
 import os
@@ -97,6 +95,7 @@ def trace_video(model, proc, frames, label, layers, dev):
     store = ActStore()
     mods = dict(model.named_modules())
 
+    # save clean activations
     handles = []
     for name in layers:
         handles.append(mods[name].register_forward_hook(store.save_hook(name)))
@@ -105,10 +104,12 @@ def trace_video(model, proc, frames, label, layers, dev):
     for h in handles:
         h.remove()
 
+    # corrupted run (shuffled frames)
     shuffled = shuffle_frames(frames)
     probs = run_forward(model, proc, shuffled, dev)
     corrupt_p = probs[label].item()
 
+    # patch each layer one at a time to see how much it recovers
     scores = {}
     for ln in layers:
         h = mods[ln].register_forward_hook(store.patch_hook(ln))
@@ -132,7 +133,6 @@ def main():
     dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Device: {dev}")
 
-    print("Loading model...")
     proc = AutoImageProcessor.from_pretrained(args.model_dir, local_files_only=True)
     model = TimesformerForVideoClassification.from_pretrained(args.model_dir, local_files_only=True)
     model = model.to(dev)

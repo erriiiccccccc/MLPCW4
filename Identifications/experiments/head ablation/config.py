@@ -1,5 +1,3 @@
-"""Config for the head-ablation experiments."""
-
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -32,7 +30,7 @@ class AblationConfig:
     device: str = "cuda"
 
     @property
-    def total_heads(self) -> int:
+    def total_heads(self):
         return self.num_layers * 2 * self.num_heads
 
     def __post_init__(self):

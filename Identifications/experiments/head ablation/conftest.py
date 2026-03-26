@@ -1,5 +1,3 @@
-"""Ensure the head-ablation directory is importable in tests."""
-
 import sys
 import os
 
