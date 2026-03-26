@@ -1,4 +1,4 @@
-"""loads the model and runs baseline eval on SSv2 frames."""
+"""Load the model and run the SSv2 baseline eval."""
 
 import torch
 import torch.nn.functional as F
@@ -11,7 +11,7 @@ from real_video_loader import create_dataloader_from_config
 
 
 def load_model_and_processor(config: AblationConfig):
-    """load TimeSformer + processor, move to device."""
+    """Load the model and processor onto the configured device."""
     print(f"Loading model: {config.model_name}")
     processor = AutoImageProcessor.from_pretrained(config.model_name)
     model = TimesformerForVideoClassification.from_pretrained(config.model_name)
@@ -37,11 +37,9 @@ def evaluate(model, dataloader, device: str = "cuda",
         outputs = model(pixel_values=pixel_values)
         logits = outputs.logits
 
-        # top-1
         preds = logits.argmax(dim=-1)
         correct_top1 += (preds == labels).sum().item()
 
-        # top-5
         _, top5_preds = logits.topk(5, dim=-1)
         correct_top5 += (top5_preds == labels.unsqueeze(1)).any(dim=1).sum().item()
 

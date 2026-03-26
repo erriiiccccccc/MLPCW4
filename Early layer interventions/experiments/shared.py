@@ -1,15 +1,16 @@
-"""
-Shared utilities for Group B temporal fine-tuning experiments.
-Dataset, evaluate (paper protocol), freeze helpers, result saving.
-"""
+"""Shared helpers for the Group B temporal fine-tuning experiments."""
 
-import os, sys, json, time, random
+import json
+import os
+import random
+import sys
+import time
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, Subset
 from PIL import Image, ImageFile
-from transformers import TimesformerForVideoClassification, AutoImageProcessor
+from transformers import AutoImageProcessor, TimesformerForVideoClassification
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../setup'))
 from step3_full_evaluation import SSv2Dataset as _SSv2Eval, collate_fn
@@ -23,7 +24,6 @@ TEST_CSV    = '/disk/scratch/MLPG102/evaluation_frames/frame_lists/test.csv'
 RESULTS_DIR = '/home/s2411221/temporal_experiments/results'
 DEVICE      = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# Training hypers (same for all Group B experiments)
 TRAIN_SUBSET = 0.15
 BATCH_TRAIN  = 8
 BATCH_EVAL   = 8
@@ -34,7 +34,6 @@ NUM_WORKERS  = 4
 NUM_FRAMES   = 8
 SEED         = 42
 
-# Per-layer Shapley sums (Session 9, 12-layer run)
 SHAPLEY_SUMS = {
     0: 0.056, 1: 0.057, 2: 0.045, 3: 0.077,
     4: 0.104, 5: 0.052, 6: 0.126, 7: 0.049,
@@ -44,7 +43,6 @@ SHAPLEY_SUMS = {
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
-# ── TRAINING DATASET (processor-based, faster for training loop) ──────────────
 class SSv2TrainDataset(Dataset):
     def __init__(self, csv_path, frames_dir, processor, num_frames=8):
         self.frames_dir = frames_dir
@@ -87,7 +85,6 @@ class SSv2TrainDataset(Dataset):
         return inputs['pixel_values'].squeeze(0), label
 
 
-# ── MODEL LOADING ─────────────────────────────────────────────────────────────
 def load_model():
     model = TimesformerForVideoClassification.from_pretrained(
         MODEL_DIR, local_files_only=True)
@@ -95,7 +92,6 @@ def load_model():
     return model
 
 
-# ── FREEZE / UNFREEZE ─────────────────────────────────────────────────────────
 def freeze_all(model):
     for p in model.parameters():
         p.requires_grad_(False)
@@ -115,7 +111,6 @@ def unfreeze_temporal(model):
     return n
 
 
-# ── EVALUATION (paper protocol: 3 spatial crops, averaged) ────────────────────
 def evaluate(model, desc="eval"):
     dataset = _SSv2Eval(
         frames_dir=FRAMES_DIR, test_csv=TEST_CSV,
@@ -125,7 +120,7 @@ def evaluate(model, desc="eval"):
         num_workers=NUM_WORKERS, collate_fn=collate_fn, pin_memory=True)
 
     model.eval()
-    all_probs  = {}
+    all_probs = {}
     all_labels = {}
     t0 = time.time()
 
@@ -145,7 +140,8 @@ def evaluate(model, desc="eval"):
 
     correct_top1 = correct_top5 = 0
     total = len(all_probs)
-    per_class_c = {}; per_class_t = {}
+    per_class_c = {}
+    per_class_t = {}
 
     for sidx, probs_list in all_probs.items():
         avg  = torch.stack(probs_list).mean(0)
@@ -164,20 +160,18 @@ def evaluate(model, desc="eval"):
     return {'top1': top1, 'top5': top5, 'per_class_acc': per_class, 'n': total}
 
 
-# ── TRAIN DATALOADER ──────────────────────────────────────────────────────────
 def make_train_loader():
     random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
     processor = AutoImageProcessor.from_pretrained(MODEL_DIR, local_files_only=True)
-    full_ds   = SSv2TrainDataset(TRAIN_CSV, FRAMES_DIR, processor, NUM_FRAMES)
-    n_subset  = int(len(full_ds) * TRAIN_SUBSET)
-    indices   = random.sample(range(len(full_ds)), n_subset)
-    subset    = Subset(full_ds, indices)
+    full_ds = SSv2TrainDataset(TRAIN_CSV, FRAMES_DIR, processor, NUM_FRAMES)
+    n_subset = int(len(full_ds) * TRAIN_SUBSET)
+    indices = random.sample(range(len(full_ds)), n_subset)
+    subset = Subset(full_ds, indices)
     print(f"  Training subset: {n_subset}/{len(full_ds)} videos ({TRAIN_SUBSET*100:.0f}%)")
     return DataLoader(subset, batch_size=BATCH_TRAIN, shuffle=True,
                       num_workers=NUM_WORKERS, pin_memory=True)
 
 
-# ── SAVE RESULT ───────────────────────────────────────────────────────────────
 def save_result(name, result, extra=None):
     record = {'experiment': name, **result}
     if extra:

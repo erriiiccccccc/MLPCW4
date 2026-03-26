@@ -1,12 +1,4 @@
-"""Temporal head analysis visualizations for TimeSformer.
-
-Five visualization types:
-    1. Shapley heatmap: 12 layers x 12 heads colored by Shapley value
-    2. Temporal attention pattern gallery: top-5 and bottom-5 heads
-    3. Head clustering dendrogram: hierarchical clustering by attention similarity
-    4. Semantic importance bar chart: importance grouped by SSv2 action category
-    5. Redundancy matrix heatmap: 12x12 per layer showing head similarity
-"""
+"""Visualizations for the temporal head analysis outputs."""
 
 import numpy as np
 import pandas as pd
@@ -20,10 +12,6 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 
 DPI = 150
 
-
-# ---------------------------------------------------------------------------
-# 1. Shapley heatmap
-# ---------------------------------------------------------------------------
 
 def plot_shapley_heatmap(
     shapley_df: pd.DataFrame,
@@ -59,10 +47,6 @@ def plot_shapley_heatmap(
     print(f"  Shapley heatmap saved to {path}")
 
 
-# ---------------------------------------------------------------------------
-# 2. Temporal attention pattern gallery
-# ---------------------------------------------------------------------------
-
 def plot_attention_gallery(
     shapley_df: pd.DataFrame,
     attention_dir: Path,
@@ -70,7 +54,6 @@ def plot_attention_gallery(
     top_n: int = 5,
 ) -> None:
     """Show attention heatmaps for top-N and bottom-N heads by Shapley value."""
-    # Load attention patterns
     layer_attns = {}
     for npy_file in sorted(attention_dir.glob("attention_L*.npy")):
         layer_idx = int(npy_file.stem.split("_L")[1])
@@ -80,7 +63,6 @@ def plot_attention_gallery(
         print("  Attention gallery skipped — no .npy attention files found")
         return
 
-    # Get top and bottom heads
     sorted_df = shapley_df.sort_values("shapley_value", ascending=False)
     available = sorted_df[sorted_df["layer"].isin(layer_attns.keys())]
     top_heads = available.head(top_n)
@@ -133,16 +115,11 @@ def plot_attention_gallery(
     print(f"  Attention gallery saved to {path}")
 
 
-# ---------------------------------------------------------------------------
-# 3. Head clustering dendrogram
-# ---------------------------------------------------------------------------
-
 def plot_head_dendrogram(
     attention_dir: Path,
     output_dir: Path,
 ) -> None:
     """Hierarchical clustering of all temporal heads by attention pattern."""
-    # Load all attention patterns and build feature matrix
     layer_attns = {}
     for npy_file in sorted(attention_dir.glob("attention_L*.npy")):
         layer_idx = int(npy_file.stem.split("_L")[1])
@@ -163,7 +140,6 @@ def plot_head_dendrogram(
 
     feature_matrix = np.stack(features)
 
-    # Hierarchical clustering
     Z = linkage(feature_matrix, method="ward", metric="euclidean")
 
     fig, ax = plt.subplots(figsize=(max(16, len(labels) * 0.3), 8))
@@ -183,10 +159,6 @@ def plot_head_dendrogram(
     print(f"  Dendrogram saved to {path}")
 
 
-# ---------------------------------------------------------------------------
-# 4. Semantic importance bar chart
-# ---------------------------------------------------------------------------
-
 def plot_semantic_importance(
     per_class_path: Path,
     output_dir: Path,
@@ -201,7 +173,6 @@ def plot_semantic_importance(
         print("  Semantic importance skipped — empty or missing category column")
         return
 
-    # Average flip rate per category
     cat_importance = df.groupby("category")["flip_rate"].mean().sort_values(ascending=False)
 
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -217,7 +188,6 @@ def plot_semantic_importance(
     ax.set_title("Temporal Head Importance by SSv2 Action Category", fontsize=14)
     ax.invert_yaxis()
 
-    # Add value labels
     for bar, val in zip(bars, cat_importance.values):
         ax.text(val + 0.002, bar.get_y() + bar.get_height() / 2,
                 f"{val:.3f}", va="center", fontsize=9)

@@ -1,9 +1,4 @@
-"""monte carlo shapley values for temporal attention heads.
-
-computes per-head shapley values using permutation sampling + antithetic
-variance reduction. value fn = 0.5*(1 - flip_rate) + 0.5*(-KL_div).
-basically measures how much each head contributes to prediction consistency.
-"""
+"""Monte Carlo Shapley values for temporal attention heads."""
 
 import json
 import time
@@ -20,21 +15,12 @@ from baseline import load_model_and_processor
 from real_video_loader import create_dataloader_from_config
 
 
-# ---------------------------------------------------------------------------
-# Multi-head ablation hook
-# ---------------------------------------------------------------------------
-
 def make_multi_ablation_hook(
     heads_to_ablate: Set[int],
     num_heads: int = 12,
     head_dim: int = 64,
 ):
-    """creates a hook that zeros out an arbitrary subset of heads at once.
-
-    heads_to_ablate is the set of head indices to kill (0-11).
-    used for coalition evaluation in shapley computation.
-    """
-    # sort for determinism, doesnt actually matter much but cleaner
+    """Create a hook that zeros an arbitrary subset of heads."""
     ablate_list = sorted(heads_to_ablate)
 
     def hook_fn(module, input, output):
@@ -51,10 +37,6 @@ def make_multi_ablation_hook(
     return hook_fn
 
 
-# ---------------------------------------------------------------------------
-# Value function (combined flip rate + KL divergence)
-# ---------------------------------------------------------------------------
-
 @torch.no_grad()
 def evaluate_coalition(
     model,
@@ -66,17 +48,11 @@ def evaluate_coalition(
     config: AblationConfig,
     verbose: bool = False,
 ) -> float:
-    """evaluate the model with a specific set of temporal heads ablated.
-
-    value function: v(S) = 0.5*(1 - flip_rate) + 0.5*(-KL_div)
-    where S is the set of active heads (we ablate everything NOT in S).
-    higher value = active coalition preserves model behaviour better.
-    """
+    """Evaluate the model with a specific set of temporal heads ablated."""
     if not heads_to_ablate:
-        # no heads ablated = baseline, shortcut this
         if verbose:
             print(f"    eval L{layer_idx} ablate={{}} → shortcut (no ablation)", flush=True)
-        return 0.5 * 1.0 + 0.5 * 0.0  # flip=0 → 1-0=1, KL=0 → -0=0
+        return 0.5 * 1.0 + 0.5 * 0.0
 
     if verbose:
         t0 = time.time()
@@ -105,14 +81,11 @@ def evaluate_coalition(
     ablated_logits = torch.cat(all_logits, dim=0)
     ablated_preds = torch.cat(all_preds, dim=0)
 
-    # flip rate - fraction of predictions that changed (lower = better, so we flip)
     flip_rate = (ablated_preds != baseline_preds).float().mean().item()
     flip_val = 1.0 - flip_rate
 
-    # kl div - how much the output distribution shifted (negate so higher = better)
     baseline_probs = F.softmax(baseline_logits, dim=-1)
     ablated_probs = F.softmax(ablated_logits, dim=-1)
-    # clamp to avoid log(0), learned this the hard way
     ablated_log_probs = torch.clamp(ablated_probs, min=1e-8).log()
     kl_div = F.kl_div(
         ablated_log_probs, baseline_probs, reduction="batchmean"
@@ -128,10 +101,6 @@ def evaluate_coalition(
     return 0.5 * flip_val + 0.5 * kl_val
 
 
-# ---------------------------------------------------------------------------
-# Baseline predictions helper (same pattern as run_real_videos.py)
-# ---------------------------------------------------------------------------
-
 @torch.no_grad()
 def get_baseline_predictions(model, dataloader, device: str):
     """Collect baseline logits and predicted class ids."""
@@ -146,29 +115,12 @@ def get_baseline_predictions(model, dataloader, device: str):
     return torch.cat(all_logits, dim=0), torch.cat(all_preds, dim=0)
 
 
-# ---------------------------------------------------------------------------
-# Generic Shapley from arbitrary value function (for testing / synthetic use)
-# ---------------------------------------------------------------------------
-
 def compute_shapley_from_value_fn(
     value_fn,
     num_heads: int,
     num_permutations: int = 200,
 ) -> Dict[int, float]:
-    """Compute Shapley values using a generic value function (no model needed).
-
-    Useful for testing Shapley properties (efficiency, symmetry) with synthetic
-    value functions.
-
-    Args:
-        value_fn: Callable that takes a set of active head indices and returns
-            a scalar value. Signature: ``value_fn(active_heads: set) -> float``.
-        num_heads: Number of players/heads.
-        num_permutations: Number of Monte Carlo permutations.
-
-    Returns:
-        Dict mapping head index -> Shapley value.
-    """
+    """Compute Shapley values from a generic value function."""
     shapley = np.zeros(num_heads)
     all_heads = set(range(num_heads))
 
@@ -194,10 +146,6 @@ def compute_shapley_from_value_fn(
     return {h: shapley[h] for h in range(num_heads)}
 
 
-# ---------------------------------------------------------------------------
-# Monte Carlo Shapley with antithetic sampling + caching
-# ---------------------------------------------------------------------------
-
 def compute_shapley_layer(
     model,
     dataloader,
@@ -210,14 +158,7 @@ def compute_shapley_layer(
     convergence_check_every: int = 10,
     verbose: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Compute Shapley values for temporal heads in one layer.
-
-    Uses antithetic sampling: for each random permutation, also evaluates
-    the reversed permutation. This halves variance for a given compute budget.
-
-    Includes convergence monitoring: stops early if max relative change in
-    Shapley estimates falls below convergence_threshold for all heads.
-
+    """Compute Shapley values for the temporal heads in one layer.
     Args:
         model: TimeSformer model.
         dataloader: Evaluation DataLoader.

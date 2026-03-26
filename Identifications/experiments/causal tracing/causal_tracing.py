@@ -1,13 +1,9 @@
-"""
-Causal tracing for TimeSformer on SSv2.
+"""Run causal tracing on TimeSformer temporal attention layers."""
 
-Per video: clean run (save hidden states) -> corrupt run (shuffle frames) ->
-patch one layer at a time, measure recovery of P(correct).
-
-score = P(correct | patched at layer L) - P(correct | corrupted)
-"""
-
-import os, json, random, argparse
+import argparse
+import json
+import os
+import random
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -101,7 +97,6 @@ def trace_video(model, proc, frames, label, layers, dev):
     store = ActStore()
     mods = dict(model.named_modules())
 
-    # clean run
     handles = []
     for name in layers:
         handles.append(mods[name].register_forward_hook(store.save_hook(name)))
@@ -110,12 +105,10 @@ def trace_video(model, proc, frames, label, layers, dev):
     for h in handles:
         h.remove()
 
-    # corrupt run
     shuffled = shuffle_frames(frames)
     probs = run_forward(model, proc, shuffled, dev)
     corrupt_p = probs[label].item()
 
-    # patch one layer at a time
     scores = {}
     for ln in layers:
         h = mods[ln].register_forward_hook(store.patch_hook(ln))

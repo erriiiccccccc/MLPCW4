@@ -1,15 +1,4 @@
-"""temporal semantic analysis of attention heads in TimeSformer.
-
-extracts temporal attn patterns and tries to understand what each head is
-actually doing - does it focus on early frames? late? is it specialised at all?
-
-analyses:
-    1. attn pattern clustering (kmeans on flattened attention maps)
-    2. temporal receptive field (which frames each head attends to)
-    3. head specialization score (entropy - low means specialised)
-    4. per-class importance grouped by SSv2 action categories
-    5. temporal attention distance
-"""
+"""Temporal attention pattern analysis for TimeSformer heads."""
 
 import json
 import time
@@ -28,17 +17,8 @@ from real_video_loader import create_dataloader_from_config
 from ablation import make_ablation_hook
 
 
-# ---------------------------------------------------------------------------
-# Temporal attention extraction
-# ---------------------------------------------------------------------------
-
 def _force_temporal_output_attentions(model, num_layers: int):
-    """monkey-patch temporal attn to always output attn probs.
-
-    huggingface doesnt pass output_attentions to temporal_attention (only spatial),
-    so hooks cant see attn weights. we wrap each module's forward to force it.
-    returns list of (module, orig_forward) so you can undo it after.
-    """
+    """Patch temporal attention modules to always return attention probs."""
     originals = []
     for i in range(num_layers):
         module = model.timesformer.encoder.layer[i].temporal_attention.attention
@@ -76,7 +56,6 @@ def extract_temporal_attention(
     num_heads = config.num_heads
     T = config.num_frames  # 8
 
-    # Storage: accumulate across batches
     layer_attns: Dict[int, List[np.ndarray]] = {i: [] for i in range(num_layers)}
     hooks = []
     attn_store: Dict[int, torch.Tensor] = {}
@@ -84,14 +63,11 @@ def extract_temporal_attention(
     def make_attn_hook(layer_idx: int):
         def hook_fn(module, input, output):
             if isinstance(output, tuple) and len(output) > 1:
-                # output[1] = attention probs: (B*num_spatial, num_heads, T, T)
                 attn_store[layer_idx] = output[1].detach().cpu()
         return hook_fn
 
-    # Force temporal attention modules to output attention probs
     patched = _force_temporal_output_attentions(model, num_layers)
 
-    # Register hooks
     for i in range(num_layers):
         layer = model.timesformer.encoder.layer[i]
         h = layer.temporal_attention.attention.register_forward_hook(
@@ -112,24 +88,17 @@ def extract_temporal_attention(
             for layer_idx in range(num_layers):
                 if layer_idx not in attn_store:
                     continue
-                # attn shape: (batch*num_spatial, num_heads, T, T)
                 attn = attn_store[layer_idx]
-                # Compute num_spatial from actual tensor shape
                 num_spatial = attn.shape[0] // batch_size
-                # Infer T from actual attention shape (robust to CLS token)
                 T_actual = attn.shape[2]
-                # Reshape to (batch, num_spatial, num_heads, T, T)
                 attn = attn.view(batch_size, num_spatial, num_heads, T_actual, T_actual)
-                # Average over spatial locations -> (batch, num_heads, T, T)
                 attn_avg = attn.mean(dim=1).numpy()
                 layer_attns[layer_idx].append(attn_avg)
     finally:
-        # Always clean up: remove hooks and restore original forwards
         for h in hooks:
             h.remove()
         _restore_temporal_forwards(patched)
 
-    # Concatenate across batches
     result = {}
     for layer_idx in range(num_layers):
         if layer_attns[layer_idx]:
@@ -141,22 +110,11 @@ def extract_temporal_attention(
     return result
 
 
-# ---------------------------------------------------------------------------
-# Analysis 1: Attention pattern clustering
-# ---------------------------------------------------------------------------
-
 def cluster_attention_patterns(
     layer_attns: Dict[int, np.ndarray],
     n_clusters: int = 4,
 ) -> pd.DataFrame:
-    """Cluster temporal heads by their attention patterns using K-means.
-
-    For each head, the feature vector is the mean attention map (TxT)
-    flattened. Clustering reveals groups of heads with similar behaviour.
-
-    Returns:
-        DataFrame with columns: layer, head, cluster, pattern_type.
-    """
+    """Cluster temporal heads by their mean attention patterns."""
     rows = []
     T = None
 
@@ -164,13 +122,8 @@ def cluster_attention_patterns(
         attn = layer_attns[layer_idx]  # (N, H, T, T)
         N, H, T, _ = attn.shape
 
-        # Mean attention per head -> (H, T, T)
         mean_attn = attn.mean(axis=0)
-
-        # Flatten for clustering -> (H, T*T)
         features = mean_attn.reshape(H, -1)
-
-        # K-means clustering
         n_clust = min(n_clusters, H)
         km = KMeans(n_clusters=n_clust, n_init=10, random_state=42)
         labels = km.fit_predict(features)
@@ -188,19 +141,9 @@ def cluster_attention_patterns(
 
 
 def _classify_attention_pattern(attn_map: np.ndarray) -> str:
-    """Classify a TxT attention pattern into a semantic type.
-
-    Types (inspired by Kovaleva et al. 2019 for temporal domain):
-        - diagonal: attends primarily to the same frame index
-        - forward: attends to later frames
-        - backward: attends to earlier frames
-        - uniform: roughly equal attention across frames
-        - local: attends to adjacent frames (±1)
-        - long_range: attends to distant frames
-    """
+    """Classify a TxT attention pattern into a rough semantic type."""
     T = attn_map.shape[0]
 
-    # Diagonal dominance: mean of diagonal vs mean of off-diagonal
     diag_mean = np.diag(attn_map).mean()
     off_diag_mask = ~np.eye(T, dtype=bool)
     off_diag_mean = attn_map[off_diag_mask].mean()
@@ -209,15 +152,12 @@ def _classify_attention_pattern(attn_map: np.ndarray) -> str:
     if diag_ratio > 3.0:
         return "diagonal"
 
-    # Compute mean temporal offset per query
     offsets = np.arange(T)[None, :] - np.arange(T)[:, None]  # (T, T)
     mean_offset = (attn_map * offsets).sum(axis=1).mean()
 
-    # Adjacent frame dominance (±1)
     local_mask = np.abs(offsets) <= 1
     local_weight = attn_map[local_mask].sum() / attn_map.sum()
 
-    # Entropy of attention (uniform → high entropy)
     flat = attn_map.flatten()
     flat = flat / (flat.sum() + 1e-8)
     entropy = -np.sum(flat * np.log(flat + 1e-8))

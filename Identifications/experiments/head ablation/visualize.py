@@ -1,4 +1,4 @@
-"""visualization stuff for head ablation results - heatmaps, scatter plots, etc."""
+"""Plots for the head-ablation results."""
 
 import numpy as np
 import pandas as pd
@@ -14,16 +14,13 @@ from config import AblationConfig
 def plot_ablation_heatmaps(df: pd.DataFrame, config: AblationConfig,
                            metric: str = "acc_drop",
                            save: bool = True) -> None:
-    """plots side-by-side heatmaps of accuracy drop per head (temporal + spatial).
-    layers on y-axis, heads on x-axis.
-    """
+    """Plot side-by-side accuracy-drop heatmaps for temporal and spatial heads."""
     fig, axes = plt.subplots(1, 2, figsize=(16, 8))
 
     for idx, attn_type in enumerate(["temporal", "spatial"]):
         subset = df[df["attn_type"] == attn_type]
         pivot = subset.pivot(index="layer", columns="head", values=metric)
 
-        # fill missing values with 0 so the heatmap doesnt crash
         full_index = range(config.num_layers)
         full_cols = range(config.num_heads)
         pivot = pivot.reindex(index=full_index, columns=full_cols, fill_value=0)
@@ -100,21 +97,15 @@ def plot_importance_heatmaps(df: pd.DataFrame, config: AblationConfig,
 def plot_cumulative_pruning(df: pd.DataFrame, config: AblationConfig,
                             baseline_acc: float,
                             save: bool = True) -> None:
-    """Plot cumulative pruning curve.
-
-    Sorts heads by importance (least to most), iteratively ablates,
-    and plots accuracy vs percentage of heads removed.
-    """
+    """Plot a cumulative pruning curve."""
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Overall pruning curve
     sorted_df = df.sort_values("acc_drop", ascending=True)
     x_pct = np.arange(1, len(sorted_df) + 1) / len(sorted_df) * 100
     cumulative_drop = sorted_df["acc_drop"].cumsum().values
 
     ax.plot(x_pct, baseline_acc - cumulative_drop, label="All heads", linewidth=2)
 
-    # Temporal-only curve
     temporal_df = df[df["attn_type"] == "temporal"].sort_values("acc_drop", ascending=True)
     if len(temporal_df) > 0:
         x_t = np.arange(1, len(temporal_df) + 1) / len(temporal_df) * 100
@@ -122,7 +113,6 @@ def plot_cumulative_pruning(df: pd.DataFrame, config: AblationConfig,
         ax.plot(x_t, baseline_acc - cum_t, label="Temporal only",
                 linewidth=2, linestyle="--")
 
-    # Spatial-only curve
     spatial_df = df[df["attn_type"] == "spatial"].sort_values("acc_drop", ascending=True)
     if len(spatial_df) > 0:
         x_s = np.arange(1, len(spatial_df) + 1) / len(spatial_df) * 100
@@ -197,7 +187,6 @@ def plot_temporal_vs_spatial_scatter(df: pd.DataFrame, config: AblationConfig,
                     textcoords="offset points", xytext=(8, 4),
                     fontsize=10)
 
-    # Diagonal line
     lim_max = max(ax.get_xlim()[1], ax.get_ylim()[1])
     ax.plot([0, lim_max], [0, lim_max], "k--", alpha=0.3, label="Equal importance")
 

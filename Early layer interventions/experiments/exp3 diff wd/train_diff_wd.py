@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
-"""
-Exp 3: Differential weight decay (Shapley-scaled per layer).
-Exp 3-ctrl: Same setup, uniform WD=5e-4 (control).
+"""Run Exp 3 and its uniform-weight-decay control."""
 
-Both run sequentially in one script.
-Unfreeze: temporal_attention + temporal_dense + temporal_layernorm (all 12 layers).
-Everything else frozen. 5 epochs, AdamW, lr=1e-4.
-"""
-
-import sys, os, json, time
+import os
+import sys
+import time
 import torch
 import torch.nn as nn
 
@@ -21,11 +16,6 @@ from shared import (
 
 
 def build_param_groups(model, use_shapley_wd):
-    """
-    One param group per layer for temporal params.
-    If use_shapley_wd: WD scaled by Shapley tier.
-    If not: uniform WD=BASE_WD for all.
-    """
     param_groups = []
     for idx, block in enumerate(model.timesformer.encoder.layer):
         if use_shapley_wd:
@@ -100,7 +90,6 @@ def train(model, train_loader, use_shapley_wd, exp_name):
 def main():
     train_loader = make_train_loader()
 
-    # ── Exp 3: Shapley-scaled WD ──────────────────────────────────────────
     print("\n" + "="*60)
     print("Exp 3: Differential (Shapley-scaled) weight decay")
     print("="*60)
@@ -117,7 +106,6 @@ def main():
     })
     del model
 
-    # ── Exp 3-ctrl: Uniform WD ─────────────────────────────────────────────
     print("\n" + "="*60)
     print("Exp 3-ctrl: Uniform weight decay (control)")
     print("="*60)
@@ -133,7 +121,6 @@ def main():
                    'base_lr': BASE_LR, 'epochs': EPOCHS, 'train_subset': 0.15}
     })
 
-    # ── Summary ───────────────────────────────────────────────────────────
     print("\n" + "="*60)
     print("EXP 3 RESULTS")
     print("="*60)

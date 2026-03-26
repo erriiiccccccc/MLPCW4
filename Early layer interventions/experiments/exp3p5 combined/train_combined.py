@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
-"""
-Exp 3+5: Combined — Shapley differential WD + knowledge distillation.
-Temporal-only fine-tuning, same subset/seed/epochs as Exp 3 and Exp 5.
-"""
+"""Run the combined Shapley-WD and distillation experiment."""
 
-import sys, os, json, time
+import os
+import sys
+import time
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 sys.path.insert(0, os.path.dirname(__file__))
 from shared import (
     load_model, freeze_all, unfreeze_temporal, make_train_loader,
     evaluate, save_result, SHAPLEY_SUMS, BASE_LR, BASE_WD, EPOCHS,
-    RESULTS_DIR, DEVICE
+    DEVICE
 )
 from train_distillation import (
     register_attention_capture, temporal_distillation_loss,

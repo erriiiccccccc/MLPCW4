@@ -1,12 +1,8 @@
-"""
-knowledge distillation experiment: use teacher's temporal attention outputs to guide student layers
-- teacher: layers 10, 11 (top 2)
-- student: layers 1, 2, 5, 7 (4 early/mid layers)
-- distil loss: KL div between teacher's avg softmax and student's softmax
-- control: same setup but no distillation loss (CE only)
-"""
+"""Run temporal-attention distillation and its CE-only control."""
 
-import sys, os, time
+import os
+import sys
+import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,7 +11,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from shared import (
     load_model, freeze_all, unfreeze_temporal, make_train_loader,
     evaluate, save_result, BASE_LR, BASE_WD, EPOCHS,
-    RESULTS_DIR, DEVICE
+    DEVICE
 )
 
 TEACHER_LAYERS = {10, 11}
@@ -114,7 +110,6 @@ def train(model, loader, use_distil, name):
 def main():
     loader = make_train_loader()
 
-    # exp 5: distillation
     print("\n" + "="*60)
     print("Exp 5: distillation (teacher L10/L11 -> student L1/L2/L5/L7)")
     print("="*60)
@@ -133,7 +128,6 @@ def main():
     })
     del m5
 
-    # exp 5 control: CE only
     print("\n" + "="*60)
     print("Exp 5-ctrl: CE-only (no distillation)")
     print("="*60)

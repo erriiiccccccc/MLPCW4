@@ -1,12 +1,9 @@
-"""
-Attention budget reallocation experiment.
+"""Reallocate early-layer temporal heads and fine-tune a concat head."""
 
-for early layers (0-3) we want to find highest-entropy spatial head (semantic) and
-lowest-entropy temporal head (least useful early). Copy this spatial Q/K/V weights
-into the temporal head slot, then fine-tune a concat classifier head.
-"""
-
-import os, json, random, argparse
+import argparse
+import json
+import os
+import random
 import numpy as np
 from PIL import Image, ImageFile
 import torch
@@ -205,7 +202,6 @@ class TimeSformerRealloc(nn.Module):
         self.backbone = base_model
         self.target_layers = [8, 9, 10, 11]
         self.head = ConcatHead(hsz=768, nlayers=4, nclasses=nclasses)
-        # freeze backbone, only train head
         for p in self.backbone.parameters():
             p.requires_grad = False
         for p in self.head.parameters():

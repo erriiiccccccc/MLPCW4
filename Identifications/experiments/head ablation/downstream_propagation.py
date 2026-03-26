@@ -1,17 +1,4 @@
-"""downstream propagation analysis - measures how ablating a head in layer L
-affects all downstream layers L+1 through 11.
-
-does two forward passes per ablation (baseline vs ablated) and captures hidden
-states + attn patterns at every downstream layer via hooks.
-
-metrics per downstream layer:
-    - cosine_sim: direction preservation between baseline/ablated hidden states
-    - l2_distance: normalized L2 distance (how much did the repr change)
-    - attention_kl: KL div between temporal attn distributions
-    - attention_jsd: symetric version of KL, bounded [0,1]
-    - norm_ratio: feature norm change (>1 means amplified, <1 means dampened)
-    - cka: representation geometry similarity (Kornblith et al. 2019)
-"""
+"""Measure how an ablated head changes downstream layers."""
 
 import json
 import time
@@ -29,12 +16,8 @@ from real_video_loader import create_dataloader_from_config
 from ablation import make_ablation_hook
 
 
-# ---------------------------------------------------------------------------
-# Hidden state capture hooks
-# ---------------------------------------------------------------------------
-
 def _make_hidden_state_hook(store: Dict[int, torch.Tensor], layer_idx: int):
-    """captures hidden states at a given layer - just grabs output[0] from the block."""
+    """Capture hidden states at a given layer."""
     def hook_fn(module, input, output):
         if isinstance(output, tuple):
             store[layer_idx] = output[0].detach().cpu()
@@ -55,16 +38,8 @@ def _make_attn_capture_hook(store: Dict[int, torch.Tensor], layer_idx: int):
     return hook_fn
 
 
-# ---------------------------------------------------------------------------
-# Monkey-patch for temporal attention (reuse pattern from temporal_semantics.py)
-# ---------------------------------------------------------------------------
-
 def _force_temporal_output_attentions(model, num_layers: int):
-    """monkey-patch temporal attn to always output attn probs.
-
-    huggingface doesnt pass output_attentions to temporal_attention (only spatial),
-    so hooks cant see the weights. this patches it.
-    """
+    """Patch temporal attention modules to always return attention probs."""
     originals = []
     for i in range(num_layers):
         module = model.timesformer.encoder.layer[i].temporal_attention.attention
@@ -86,10 +61,6 @@ def _restore_temporal_forwards(originals):
         module.forward = orig_forward
 
 
-# ---------------------------------------------------------------------------
-# Core: capture hidden states + attention for a single forward pass
-# ---------------------------------------------------------------------------
-
 @torch.no_grad()
 def _capture_forward_pass(
     model,
@@ -97,19 +68,7 @@ def _capture_forward_pass(
     num_layers: int,
 ) -> Tuple[Dict[int, torch.Tensor], Dict[int, torch.Tensor],
            Dict[int, torch.Tensor]]:
-    """Run a forward pass and capture hidden states + temporal/spatial attention.
-
-    Args:
-        model: TimeSformer model (with temporal attention already monkey-patched).
-        pixel_values: Input tensor on the correct device.
-        num_layers: Number of transformer layers.
-
-    Returns:
-        (hidden_states, temporal_attn, spatial_attn):
-            hidden_states: dict mapping layer_idx -> tensor on CPU
-            temporal_attn: dict mapping layer_idx -> temporal attention probs
-            spatial_attn: dict mapping layer_idx -> spatial attention probs
-    """
+    """Run a forward pass and capture hidden states plus attention tensors."""
     hidden_store: Dict[int, torch.Tensor] = {}
     temporal_attn_store: Dict[int, torch.Tensor] = {}
     spatial_attn_store: Dict[int, torch.Tensor] = {}
@@ -118,17 +77,14 @@ def _capture_forward_pass(
     try:
         for i in range(num_layers):
             layer = model.timesformer.encoder.layer[i]
-            # Block output (hidden states)
             h = layer.register_forward_hook(
                 _make_hidden_state_hook(hidden_store, i)
             )
             hooks.append(h)
-            # Temporal attention probs
             h2 = layer.temporal_attention.attention.register_forward_hook(
                 _make_attn_capture_hook(temporal_attn_store, i)
             )
             hooks.append(h2)
-            # Spatial attention probs
             h3 = layer.attention.attention.register_forward_hook(
                 _make_attn_capture_hook(spatial_attn_store, i)
             )
@@ -143,58 +99,26 @@ def _capture_forward_pass(
     return hidden_store, temporal_attn_store, spatial_attn_store
 
 
-# ---------------------------------------------------------------------------
-# CKA: Centered Kernel Alignment (Kornblith et al., 2019)
-# ---------------------------------------------------------------------------
-
 def linear_cka(X: torch.Tensor, Y: torch.Tensor) -> float:
-    """Compute Linear CKA between two representation matrices.
-
-    CKA measures structural similarity of representations across samples,
-    invariant to isotropic scaling and orthogonal transforms.
-
-    Args:
-        X: (n_samples, features) baseline representations.
-        Y: (n_samples, features) ablated representations.
-
-    Returns:
-        CKA score in [0, 1]. 1.0 = identical geometry.
-    """
-    # Center
+    """Compute linear CKA between two representation matrices."""
     X = X - X.mean(dim=0)
     Y = Y - Y.mean(dim=0)
 
-    # HSIC estimates
     hsic_xy = (X.T @ Y).pow(2).sum()
     hsic_xx = (X.T @ X).pow(2).sum()
     hsic_yy = (Y.T @ Y).pow(2).sum()
 
     denom = hsic_xx.sqrt() * hsic_yy.sqrt()
     if denom < 1e-10:
-        return 1.0  # both zero → identical
+        return 1.0
     return (hsic_xy / denom).item()
 
-
-# ---------------------------------------------------------------------------
-# Attention JSD: Jensen-Shannon Divergence
-# ---------------------------------------------------------------------------
 
 def attention_jsd(
     bl_attn: torch.Tensor,
     ab_attn: torch.Tensor,
 ) -> float:
-    """Compute Jensen-Shannon divergence between attention distributions.
-
-    JSD is symmetric and bounded in [0, log(2)] ≈ [0, 0.693].
-    We normalize to [0, 1] by dividing by log(2).
-
-    Args:
-        bl_attn: Baseline attention tensor (any shape, last dim is distribution).
-        ab_attn: Ablated attention tensor (same shape).
-
-    Returns:
-        Normalized JSD in [0, 1].
-    """
+    """Compute Jensen-Shannon divergence between attention distributions."""
     bl = bl_attn.reshape(-1, bl_attn.shape[-1]).float().clamp(min=1e-8)
     ab = ab_attn.reshape(-1, ab_attn.shape[-1]).float().clamp(min=1e-8)
     bl = bl / bl.sum(dim=-1, keepdim=True)
@@ -204,7 +128,7 @@ def attention_jsd(
     kl_bl_m = F.kl_div(m.log(), bl, reduction="batchmean").item()
     kl_ab_m = F.kl_div(m.log(), ab, reduction="batchmean").item()
     jsd = 0.5 * kl_bl_m + 0.5 * kl_ab_m
-    return max(0.0, jsd / np.log(2))  # normalize to [0, 1]
+    return max(0.0, jsd / np.log(2))
 
 
 # ---------------------------------------------------------------------------

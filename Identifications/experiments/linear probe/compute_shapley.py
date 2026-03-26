@@ -263,7 +263,7 @@ def main():
         rng = np.random.RandomState(args.random_state)
         keep = rng.choice(len(ys), args.n_samples, replace=False)
         layer_stuff_sub = {
-            i: {'embeddings': v['embeddings'][idx]}
+            i: {'embeddings': v['embeddings'][keep]}
             for i, v in layer_stuff.items()
         }
         ys_sub = ys[keep]

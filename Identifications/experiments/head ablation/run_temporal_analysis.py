@@ -1,12 +1,4 @@
-"""main entry point for the full temporal analysis pipeline.
-
-runs all phases in order (or just the ones you specify via --phases):
-    phase 1: shapley values (shapley_importance.py)
-    phase 2: temporal attn semantics (temporal_semantics.py)
-    phase 3: training recommendations (training_recommendations.py)
-    phase 4: visualisations (visualize_temporal.py)
-    phase 5: downstream propagation (downstream_propagation.py)
-"""
+"""Run the temporal-analysis pipeline."""
 
 import json
 import time
@@ -26,18 +18,10 @@ def run_pipeline(
     data_split: str = "val",
     model_name: Optional[str] = None,
 ) -> dict:
-    """runs the full analysis pipeline for the specified phases.
-
-    phases: list of ints 1-5 (which phases to run)
-    ssv2_root_dir: path to evaluation_frames/ on the cluster
-    num_videos: how many videos to eval on (20 is usually enough)
-    num_permutations: permutations per layer for shapley (more = more accurate but slower)
-    layers: specific layers to analyze, default is all 12
-    """
+    """Run the requested analysis phases and write the combined summary."""
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # shared dataset kwargs - both phase 1 and 2 need these
     data_kwargs = dict(
         ssv2_root_dir=ssv2_root_dir,
         data_split=data_split,
@@ -68,7 +52,6 @@ def run_pipeline(
         "data_split": data_split,
     }
 
-    # Phase 1: Shapley Values
     if 1 in phases:
         print("\n" + "=" * 60)
         print("  PHASE 1: Shapley Value Computation")
@@ -90,7 +73,6 @@ def run_pipeline(
             "min_shapley": float(shapley_df["shapley_value"].min()),
         }
 
-    # Phase 2: Temporal Semantics
     if 2 in phases:
         print("\n" + "=" * 60)
         print("  PHASE 2: Temporal Semantic Analysis")
@@ -116,7 +98,6 @@ def run_pipeline(
                 ) if "specialization_score" in combined.columns else None,
             }
 
-    # Phase 3: Training Recommendations
     if 3 in phases:
         print("\n" + "=" * 60)
         print("  PHASE 3: Training Recommendations")
@@ -143,7 +124,6 @@ def run_pipeline(
                 (str_df["recommendation"] == "strengthen").sum()
             )
 
-    # Phase 4: Visualizations
     if 4 in phases:
         print("\n" + "=" * 60)
         print("  PHASE 4: Visualizations")
@@ -152,7 +132,6 @@ def run_pipeline(
 
         run_all_visualizations(output_dir=output_dir)
 
-    # Phase 5: Downstream Propagation
     if 5 in phases:
         print("\n" + "=" * 60)
         print("  PHASE 5: Downstream Propagation Analysis")
@@ -179,7 +158,6 @@ def run_pipeline(
             ) if len(downstream_only) > 0 and "cka" in downstream_only.columns else None,
         }
 
-    # Final summary
     elapsed = time.time() - start_time
     summary["elapsed_seconds"] = round(elapsed, 1)
 
@@ -192,7 +170,6 @@ def run_pipeline(
     print(f"{'=' * 60}")
     print(f"\nSummary saved to {summary_path}")
 
-    # List output files
     print(f"\nOutput files in {output_path}:")
     for p in sorted(output_path.iterdir()):
         size_kb = p.stat().st_size / 1024

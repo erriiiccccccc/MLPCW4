@@ -1,15 +1,4 @@
-"""SSv2 dataloader for pre-extracted frames using CSV frame lists.
-
-expects this folder layout on the cluster:
-    root_dir/
-        frame_lists/  (train.csv, val.csv, test.csv)
-        frames/{video_id}/00001.jpg, 00002.jpg, ...
-
-CSV format is space-seperated with no header: video_id  num_frames  label
-
-NOTE: no horizontal flip augmentation - SSv2 has directional actions like
-"pushing left to right" so flipping would completely mess up the labels.
-"""
+"""SSv2 dataloader for pre-extracted frame directories."""
 
 import os
 import numpy as np
@@ -20,11 +9,7 @@ from typing import List, Tuple
 
 
 class SSv2Dataset(Dataset):
-    """SSv2 dataset - loads pre-extracted frames using CSV frame lists.
-
-    each CSV line: video_id num_frames label (space-separated, no header).
-    frames are 5-digit zero-padded jpegs: {video_id}/00001.jpg etc.
-    """
+    """Load pre-extracted SSv2 frames from the CSV lists."""
 
     def __init__(
         self,
@@ -37,7 +22,6 @@ class SSv2Dataset(Dataset):
         self.num_frames = num_frames
         self.processor = processor
 
-        # Load CSV frame list
         csv_path = os.path.join(root_dir, "frame_lists", f"{split}.csv")
         if not os.path.isfile(csv_path):
             raise FileNotFoundError(
@@ -45,7 +29,7 @@ class SSv2Dataset(Dataset):
                 f"Expected CSV files in {root_dir}/frame_lists/"
             )
 
-        self.samples: List[Tuple[str, int, int]] = []  # (video_dir, num_frames_on_disk, label)
+        self.samples: List[Tuple[str, int, int]] = []
         skipped = 0
         with open(csv_path) as f:
             for line in f:
@@ -63,7 +47,7 @@ class SSv2Dataset(Dataset):
         )
 
     def _load_frames(self, video_dir: str, n_frames_on_disk: int) -> List[np.ndarray]:
-        """Load frames using known count (from CSV) to avoid listdir on 220K dirs."""
+        """Load frames using the CSV count before falling back to `listdir`."""
         frames = []
         for i in range(1, n_frames_on_disk + 1):
             fpath = os.path.join(video_dir, f"{i:05d}.jpg")
@@ -71,11 +55,9 @@ class SSv2Dataset(Dataset):
                 img = Image.open(fpath).convert("RGB")
                 frames.append(np.array(img))
             except (FileNotFoundError, OSError):
-                # Fall back to listing directory if naming doesn't match
                 break
 
         if len(frames) == 0:
-            # Fallback: list directory and load whatever is there
             if os.path.isdir(video_dir):
                 frame_files = sorted(
                     f for f in os.listdir(video_dir)
@@ -98,7 +80,6 @@ class SSv2Dataset(Dataset):
             dummy = np.zeros((self.num_frames, 224, 224, 3), dtype=np.uint8)
             frames = [dummy[i] for i in range(self.num_frames)]
 
-        # Uniform temporal sampling (deterministic, no random jitter)
         total = len(frames)
         if total >= self.num_frames:
             indices = np.linspace(0, total - 1, self.num_frames, dtype=int).tolist()
@@ -108,7 +89,6 @@ class SSv2Dataset(Dataset):
 
         sampled = [frames[i] for i in indices]
 
-        # Process through TimeSformer image processor (no random flip)
         if self.processor is not None:
             inputs = self.processor(images=sampled, return_tensors="pt")
             pixel_values = inputs["pixel_values"].squeeze(0)
@@ -144,11 +124,7 @@ def create_ssv2_dataloader(
 
 
 def create_dataloader_from_config(config, processor=None) -> DataLoader:
-    """Create SSv2 DataLoader from AblationConfig.
-
-    Automatically subsets to ``config.num_eval_videos`` if the full dataset
-    is larger, so callers don't need to apply Subset themselves.
-    """
+    """Create an SSv2 dataloader from `AblationConfig`."""
     if not config.ssv2_root_dir:
         raise ValueError(
             "ssv2_root_dir must be set in AblationConfig "

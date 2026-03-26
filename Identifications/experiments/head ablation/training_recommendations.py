@@ -1,15 +1,4 @@
-"""training recommendations from the temporal head analysis results.
-
-combines shapley values + attention semantics to figure out what to actually
-do to the model - which heads to prune, which to strengthen, etc.
-
-analyses:
-    1. head redundancy matrix (pairwise cosine sim per layer)
-    2. layer contribution (temporal vs spatial importance)
-    3. gate value simulation based on shapley importance
-    4. pruning recs (heads safe to remove with <1% impact)
-    5. strengthening recs (weak but unique heads worth keeping)
-"""
+"""Generate training recommendations from the temporal-head analysis results."""
 
 import json
 import time
@@ -20,21 +9,10 @@ from typing import Dict, Optional, Tuple
 from scipy.spatial.distance import cosine
 
 
-# ---------------------------------------------------------------------------
-# Analysis 1: Head redundancy matrix
-# ---------------------------------------------------------------------------
-
 def compute_head_redundancy(
     layer_attns: Dict[int, np.ndarray],
 ) -> Tuple[pd.DataFrame, Dict[int, np.ndarray]]:
-    """computes pairwise cosine similarity between temporal head attn patterns.
-
-    for each layer gives a 12x12 sim matrix. high similarity = redundant heads
-    that could probaly be diversified.
-
-    layer_attns: dict mapping layer_idx -> (N, H, T, T) attention array.
-    returns (redundancy_df, sim_matrices_per_layer).
-    """
+    """Compute pairwise cosine similarity between temporal head patterns."""
     rows = []
     sim_matrices = {}
 
@@ -42,18 +20,15 @@ def compute_head_redundancy(
         attn = layer_attns[layer_idx]  # (N, H, T, T)
         H = attn.shape[1]
 
-        # Mean attention per head: (H, T, T), then flatten
         mean_attn = attn.mean(axis=0)  # (H, T, T)
         features = mean_attn.reshape(H, -1)  # (H, T*T)
 
-        # Pairwise cosine similarity
         sim_matrix = np.zeros((H, H))
         for i in range(H):
             for j in range(H):
                 if i == j:
                     sim_matrix[i, j] = 1.0
                 else:
-                    # cosine returns distance, so similarity = 1 - distance
                     sim_matrix[i, j] = 1.0 - cosine(features[i], features[j])
 
         sim_matrices[layer_idx] = sim_matrix
@@ -69,10 +44,6 @@ def compute_head_redundancy(
 
     return pd.DataFrame(rows), sim_matrices
 
-
-# ---------------------------------------------------------------------------
-# Analysis 2: Layer contribution analysis
-# ---------------------------------------------------------------------------
 
 def compute_layer_contributions(
     shapley_df: pd.DataFrame,
@@ -108,7 +79,6 @@ def compute_layer_contributions(
             "temporal_shapley_range": max_shapley - min_shapley,
         }
 
-        # Add spatial comparison from ablation results if available
         if ablation_df is not None:
             temporal_abl = ablation_df[
                 (ablation_df["layer"] == layer_idx) &
@@ -133,10 +103,6 @@ def compute_layer_contributions(
     return pd.DataFrame(rows)
 
 
-# ---------------------------------------------------------------------------
-# Analysis 3: Gate value simulation
-# ---------------------------------------------------------------------------
-
 def simulate_gate_values(
     shapley_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -157,9 +123,7 @@ def simulate_gate_values(
 
     rows = []
     for layer_idx, total in layer_totals.items():
-        # Normalize to [0, 1] range
         normalized = total / (max_total + 1e-8)
-        # Suggested gate: higher for more important layers
         suggested_gate = max(0.0, min(1.0, float(normalized)))
 
         rows.append({
@@ -175,10 +139,6 @@ def simulate_gate_values(
 
     return pd.DataFrame(rows)
 
-
-# ---------------------------------------------------------------------------
-# Analysis 4: Pruning recommendations
-# ---------------------------------------------------------------------------
 
 def compute_pruning_recommendations(
     shapley_df: pd.DataFrame,
@@ -199,23 +159,18 @@ def compute_pruning_recommendations(
     df = shapley_df.copy()
     df["abs_shapley"] = df["shapley_value"].abs()
 
-    # Rank within each layer
     df["layer_rank"] = df.groupby("layer")["abs_shapley"].rank(ascending=False)
 
-    # Total value per layer (sum of all Shapley values)
     layer_totals = df.groupby("layer")["shapley_value"].sum()
     df["layer_total"] = df["layer"].map(layer_totals)
 
-    # Contribution percentage: head's Shapley / layer total
     df["contribution_pct"] = (
         df["shapley_value"].abs() / (df["layer_total"].abs() + 1e-8) * 100
     )
 
-    # Prunable if contribution is below threshold
     df["prunable"] = df["contribution_pct"] < threshold_pct
     df["confidence"] = "high" if "stderr" not in df.columns else None
     if "stderr" in df.columns:
-        # High confidence if the Shapley value is within 2 stderr of zero
         df["confidence"] = np.where(
             df["abs_shapley"] < 2 * df["stderr"],
             "high",  # confidently near zero → safe to prune
