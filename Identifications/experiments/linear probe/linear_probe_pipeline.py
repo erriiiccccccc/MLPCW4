@@ -31,21 +31,21 @@ def inspect_model(model_dir):
     print("MODEL INSPECTION")
     print("=" * 60)
 
-    model = load_model(model_dir)
+    net = load_model(model_dir)
 
     print("\n--- All named modules ---")
-    for name, module in model.named_modules():
-        print(f"  {name:60s} | {type(module).__name__}")
+    for n, mod in net.named_modules():
+        print(f"  {n:60s} | {type(mod).__name__}")
 
     print("\n--- Looking for transformer blocks ---")
-    blocks = find_transformer_blocks(model)
-    if blocks is not None:
-        print(f"  Found {len(blocks)} transformer blocks")
-        print(f"  First block type: {type(blocks[0]).__name__}")
+    blks = find_transformer_blocks(net)
+    if blks is not None:
+        print(f"  Found {len(blks)} transformer blocks")
+        print(f"  First block type: {type(blks[0]).__name__}")
     else:
         print("  WARNING: Could not auto-detect blocks. Check output above.")
 
-    return model
+    return net
 
 
 def load_model(model_dir):
@@ -121,7 +121,7 @@ def load_model(model_dir):
 
 def find_transformer_blocks(model):
     """Return the first block container that looks like a transformer stack."""
-    candidates = [
+    paths = [
         'model.blocks',
         'blocks',
         'timesformer.encoder.layer',
@@ -130,13 +130,13 @@ def find_transformer_blocks(model):
         'transformer.layers',
         'model.encoder.layer',
     ]
-    for path in candidates:
-        obj = model
+    for path in paths:
+        cur = model
         try:
             for attr in path.split('.'):
-                obj = getattr(obj, attr)
-            if hasattr(obj, '__len__') and len(obj) > 0:
-                return obj
+                cur = getattr(cur, attr)
+            if hasattr(cur, '__len__') and len(cur) > 0:
+                return cur
         except AttributeError:
             continue
     return None
@@ -144,9 +144,9 @@ def find_transformer_blocks(model):
 
 def find_attention_modules(block):
     """Return the first submodule whose name looks like attention."""
-    for name, module in block.named_modules():
-        if 'attn' in name.lower() and hasattr(module, 'forward'):
-            return module
+    for n, mod in block.named_modules():
+        if 'attn' in n.lower() and hasattr(mod, 'forward'):
+            return mod
     return None
 
 
@@ -220,8 +220,8 @@ class LayerFeatureExtractor:
             print(f"WARNING: Expected {num_layers} layers but found {actual_num}")
             self.num_layers = actual_num
 
-        self.layer_features = {i: [] for i in range(self.num_layers)}
-        self.layer_attentions = {i: [] for i in range(self.num_layers)}
+        self.feat_buf = {i: [] for i in range(self.num_layers)}
+        self.attn_buf = {i: [] for i in range(self.num_layers)}
         self.labels = []
         self.hooks = []
 
@@ -240,7 +240,7 @@ class LayerFeatureExtractor:
             else:
                 cls = hidden.reshape(hidden.shape[0], -1).detach().cpu()
 
-            self.layer_features[layer_idx].append(cls)
+            self.feat_buf[layer_idx].append(cls)
         return hook_fn
 
     def _make_attention_hook(self, layer_idx):
@@ -249,7 +249,7 @@ class LayerFeatureExtractor:
             if isinstance(output, tuple) and len(output) >= 2:
                 attn_weights = output[1]
                 if attn_weights is not None:
-                    self.layer_attentions[layer_idx].append(
+                    self.attn_buf[layer_idx].append(
                         attn_weights.detach().cpu()
                     )
         return hook_fn
@@ -292,29 +292,29 @@ class LayerFeatureExtractor:
 
         self.remove_hooks()
 
-        results = {}
+        out = {}
         for i in range(self.num_layers):
-            if self.layer_features[i]:
-                results[i] = {
-                    'embeddings': torch.cat(self.layer_features[i], dim=0).numpy()
+            if self.feat_buf[i]:
+                out[i] = {
+                    'embeddings': torch.cat(self.feat_buf[i], dim=0).numpy()
                 }
-                if self.layer_attentions[i]:
-                    results[i]['attention'] = torch.cat(
-                        self.layer_attentions[i], dim=0
+                if self.attn_buf[i]:
+                    out[i]['attention'] = torch.cat(
+                        self.attn_buf[i], dim=0
                     ).numpy()
             else:
                 print(f"  WARNING: No features captured for layer {i}")
 
-        all_labels = torch.cat(self.labels, dim=0).numpy()
+        ys = torch.cat(self.labels, dim=0).numpy()
 
-        for i in sorted(results.keys()):
-            emb_shape = results[i]['embeddings'].shape
-            attn_shape = (results[i]['attention'].shape
-                          if 'attention' in results[i] else 'None')
+        for i in sorted(out.keys()):
+            emb_shape = out[i]['embeddings'].shape
+            attn_shape = (out[i]['attention'].shape
+                          if 'attention' in out[i] else 'None')
             print(f"  Layer {i:2d}: embeddings {emb_shape}, "
                   f"attention {attn_shape}")
 
-        return results, all_labels
+        return out, ys
 
 
 def train_linear_probe(X_train, y_train, X_test, y_test):
@@ -336,18 +336,18 @@ def train_linear_probe(X_train, y_train, X_test, y_test):
     test_acc = accuracy_score(y_test, y_test_pred)
     cm = confusion_matrix(y_test, y_test_pred)
 
-    per_class = {}
-    for cls in np.unique(y_test):
-        mask = y_test == cls
+    per_cls = {}
+    for cls_id in np.unique(y_test):
+        mask = y_test == cls_id
         if mask.sum() > 0:
-            per_class[int(cls)] = float(accuracy_score(
+            per_cls[int(cls_id)] = float(accuracy_score(
                 y_test[mask], y_test_pred[mask]
             ))
 
     return {
         'train_acc': float(train_acc),
         'test_acc': float(test_acc),
-        'per_class_acc': per_class,
+        'per_class_acc': per_cls,
         'confusion_matrix': cm,
         'probe_weights': clf.coef_,
         'probe_bias': clf.intercept_,
@@ -359,7 +359,7 @@ def train_linear_probe(X_train, y_train, X_test, y_test):
 def run_all_linear_probes(train_layer_results, train_labels,
                           test_layer_results, test_labels, output_dir):
     """Train linear probe on train set, evaluate on test set, per layer."""
-    summary = []
+    rows = []
 
     for layer_idx in sorted(train_layer_results.keys()):
         layer_dir = os.path.join(output_dir, f'layer_{layer_idx:02d}')
@@ -386,7 +386,7 @@ def run_all_linear_probes(train_layer_results, train_labels,
         print(f"  Train acc: {probe_result['train_acc']:.4f}")
         print(f"  Test acc:  {probe_result['test_acc']:.4f}")
 
-        accuracy_info = {
+        meta = {
             'layer': layer_idx,
             'train_acc': probe_result['train_acc'],
             'test_acc': probe_result['test_acc'],
@@ -396,36 +396,36 @@ def run_all_linear_probes(train_layer_results, train_labels,
             'per_class_acc': probe_result['per_class_acc'],
         }
         with open(os.path.join(layer_dir, 'probe_accuracy.json'), 'w') as f:
-            json.dump(accuracy_info, f, indent=2)
+            json.dump(meta, f, indent=2)
 
         np.save(os.path.join(layer_dir, 'probe_weights.npy'),
                 probe_result['probe_weights'])
         np.save(os.path.join(layer_dir, 'confusion_matrix.npy'),
                 probe_result['confusion_matrix'])
 
-        summary.append({
+        rows.append({
             'layer': layer_idx,
             'train_acc': probe_result['train_acc'],
             'test_acc': probe_result['test_acc'],
             'embedding_dim': int(train_emb.shape[1]),
         })
 
-    return summary
+    return rows
 
 
-def coalition_value(layer_results, labels, coalition,
+def coalition_value(layer_results, labels, picked,
                     test_size=0.3, random_state=42):
     """Return probe accuracy on the features from the requested coalition."""
-    if len(coalition) == 0:
-        unique, counts = np.unique(labels, return_counts=True)
+    if len(picked) == 0:
+        _, counts = np.unique(labels, return_counts=True)
         return float(counts.max()) / len(labels)
 
-    feats = np.concatenate(
-        [layer_results[i]['embeddings'] for i in coalition], axis=1
+    x = np.concatenate(
+        [layer_results[i]['embeddings'] for i in picked], axis=1
     )
 
     X_train, X_test, y_train, y_test = train_test_split(
-        feats, labels, test_size=test_size,
+        x, labels, test_size=test_size,
         random_state=random_state, stratify=labels
     )
 
@@ -444,61 +444,61 @@ def exact_shapley(layer_results, labels, num_layers):
     """Compute exact Shapley values by evaluating every coalition."""
     players = list(range(num_layers))
     n = len(players)
-    total_coalitions = 2 ** n
+    total_sets = 2 ** n
 
     print(f"\n{'=' * 60}")
     print(f"EXACT SHAPLEY VALUES")
-    print(f"Players: {n}, Coalitions: {total_coalitions}")
+    print(f"Players: {n}, Coalitions: {total_sets}")
     print(f"{'=' * 60}")
 
-    cache = {}
-    eval_count = 0
-    start_time = time.time()
+    seen = {}
+    done = 0
+    t0 = time.time()
 
     for size in range(n + 1):
-        for S in combinations(players, size):
-            S_set = frozenset(S)
-            val = coalition_value(layer_results, labels, list(S))
-            cache[S_set] = val
-            eval_count += 1
+        for combo in combinations(players, size):
+            combo_key = frozenset(combo)
+            val = coalition_value(layer_results, labels, list(combo))
+            seen[combo_key] = val
+            done += 1
 
-            if eval_count % 100 == 0:
-                elapsed = time.time() - start_time
-                rate = eval_count / elapsed
-                remaining = (total_coalitions - eval_count) / rate
-                print(f"  Evaluated {eval_count}/{total_coalitions} "
+            if done % 100 == 0:
+                elapsed = time.time() - t0
+                rate = done / elapsed
+                remaining = (total_sets - done) / rate
+                print(f"  Evaluated {done}/{total_sets} "
                       f"({elapsed:.0f}s elapsed, ~{remaining:.0f}s remaining)")
 
-    elapsed = time.time() - start_time
-    print(f"\n  All {total_coalitions} coalitions evaluated in {elapsed:.1f}s")
+    elapsed = time.time() - t0
+    print(f"\n  All {total_sets} coalitions evaluated in {elapsed:.1f}s")
 
-    shapley = {}
+    svs = {}
     for i in players:
         sv = 0.0
         others = [j for j in players if j != i]
         for size in range(n):
-            for S in combinations(others, size):
-                S_set = frozenset(S)
-                S_with_i = S_set | {i}
-                marginal = cache[S_with_i] - cache[S_set]
+            for combo in combinations(others, size):
+                combo_key = frozenset(combo)
+                with_i = combo_key | {i}
+                marginal = seen[with_i] - seen[combo_key]
                 weight = (factorial(size) * factorial(n - size - 1)
                           / factorial(n))
                 sv += weight * marginal
-        shapley[i] = sv
+        svs[i] = sv
         print(f"  Layer {i:2d}: Shapley value = {sv:+.6f}")
 
-    return shapley, cache
+    return svs, seen
 
 
-def plot_results(summary, shapley_values, output_dir):
+def plot_results(rows, svs, output_dir):
     """Generate summary plots."""
-    summary_dir = os.path.join(output_dir, 'summary')
-    os.makedirs(summary_dir, exist_ok=True)
+    out_dir = os.path.join(output_dir, 'summary')
+    os.makedirs(out_dir, exist_ok=True)
 
-    layers = [s['layer'] for s in summary]
-    test_accs = [s['test_acc'] for s in summary]
-    train_accs = [s['train_acc'] for s in summary]
-    shapley_vals = [shapley_values.get(l, 0) for l in layers]
+    layers = [row['layer'] for row in rows]
+    test_accs = [row['test_acc'] for row in rows]
+    train_accs = [row['train_acc'] for row in rows]
+    shapley_vals = [svs.get(layer, 0) for layer in layers]
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
@@ -532,47 +532,47 @@ def plot_results(summary, shapley_values, output_dir):
     axes[2].grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(os.path.join(summary_dir, 'layer_comparison_plot.png'),
+    plt.savefig(os.path.join(out_dir, 'layer_comparison_plot.png'),
                 dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"\nSaved plot to {summary_dir}/layer_comparison_plot.png")
+    print(f"\nSaved plot to {out_dir}/layer_comparison_plot.png")
 
 
-def save_summary(summary, shapley_values, coalition_cache, output_dir):
+def save_summary(rows, svs, coal_cache, output_dir):
     """Save all summary data."""
-    summary_dir = os.path.join(output_dir, 'summary')
-    os.makedirs(summary_dir, exist_ok=True)
+    out_dir = os.path.join(output_dir, 'summary')
+    os.makedirs(out_dir, exist_ok=True)
 
-    df = pd.DataFrame(summary)
-    df.to_csv(os.path.join(summary_dir, 'all_layer_accuracies.csv'), index=False)
+    df = pd.DataFrame(rows)
+    df.to_csv(os.path.join(out_dir, 'all_layer_accuracies.csv'), index=False)
 
-    shapley_export = {
-        'shapley_values': {str(k): v for k, v in shapley_values.items()},
+    sv_dump = {
+        'shapley_values': {str(k): v for k, v in svs.items()},
         'ranking': [str(k) for k, v in sorted(
-            shapley_values.items(), key=lambda x: x[1], reverse=True
+            svs.items(), key=lambda x: x[1], reverse=True
         )],
         'description': (
             'Shapley value = average marginal contribution of each layer '
             'across all possible coalitions of layers. Higher = more important.'
         ),
     }
-    with open(os.path.join(summary_dir, 'shapley_values.json'), 'w') as f:
-        json.dump(shapley_export, f, indent=2)
+    with open(os.path.join(out_dir, 'shapley_values.json'), 'w') as f:
+        json.dump(sv_dump, f, indent=2)
 
-    coalition_export = {}
-    for coalition_set, value in coalition_cache.items():
-        key = ','.join(str(x) for x in sorted(coalition_set)) or 'empty'
-        coalition_export[key] = value
-    with open(os.path.join(summary_dir, 'coalition_values.json'), 'w') as f:
-        json.dump(coalition_export, f, indent=2)
+    coal_dump = {}
+    for combo_key, value in coal_cache.items():
+        key = ','.join(str(x) for x in sorted(combo_key)) or 'empty'
+        coal_dump[key] = value
+    with open(os.path.join(out_dir, 'coalition_values.json'), 'w') as f:
+        json.dump(coal_dump, f, indent=2)
 
     print(f"\n{'=' * 60}")
     print("FINAL LAYER RANKING BY SHAPLEY VALUE")
     print(f"{'=' * 60}")
     for rank, (layer, sv) in enumerate(sorted(
-        shapley_values.items(), key=lambda x: x[1], reverse=True
+        svs.items(), key=lambda x: x[1], reverse=True
     )):
-        acc = next(s['test_acc'] for s in summary if s['layer'] == layer)
+        acc = next(row['test_acc'] for row in rows if row['layer'] == layer)
         print(f"  #{rank+1:2d}  Layer {layer:2d}  |  "
               f"Shapley: {sv:+.6f}  |  Probe acc: {acc:.4f}")
 
@@ -619,7 +619,7 @@ def main():
         model = nn.DataParallel(model)
 
     print("\n[2/5] Loading datasets...")
-    raw_model = model.module if isinstance(model, nn.DataParallel) else model
+    base_model = model.module if isinstance(model, nn.DataParallel) else model
 
     train_dataset = FrameVideoDataset(
         csv_path=args.train_csv,
@@ -649,7 +649,7 @@ def main():
 
     print("\n[3/5] Extracting layer features from train set...")
     train_extractor = LayerFeatureExtractor(
-        raw_model,
+        base_model,
         num_layers=args.num_layers,
         capture_attention=True
     )
@@ -657,14 +657,14 @@ def main():
 
     print("\n    Extracting layer features from test set...")
     test_extractor = LayerFeatureExtractor(
-        raw_model,
+        base_model,
         num_layers=args.num_layers,
         capture_attention=False
     )
     test_layer_results, test_labels = test_extractor.extract(test_dataloader)
 
     print("\n[4/5] Training linear probes (train set) → evaluating on test set...")
-    summary = run_all_linear_probes(
+    rows = run_all_linear_probes(
         train_layer_results, train_labels,
         test_layer_results, test_labels,
         args.output_dir
@@ -672,16 +672,16 @@ def main():
 
     if not args.skip_shapley:
         print("\n[5/5] Computing exact Shapley values...")
-        shapley_values, coalition_cache = exact_shapley(
+        svs, coal_cache = exact_shapley(
             train_layer_results, train_labels, train_extractor.num_layers
         )
     else:
         print("\n[5/5] Skipping Shapley (--skip_shapley)")
-        shapley_values = {s['layer']: 0.0 for s in summary}
-        coalition_cache = {}
+        svs = {row['layer']: 0.0 for row in rows}
+        coal_cache = {}
 
-    save_summary(summary, shapley_values, coalition_cache, args.output_dir)
-    plot_results(summary, shapley_values, args.output_dir)
+    save_summary(rows, svs, coal_cache, args.output_dir)
+    plot_results(rows, svs, args.output_dir)
 
     print("\nDone! All results saved to:", args.output_dir)
 

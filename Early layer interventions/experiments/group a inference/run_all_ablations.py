@@ -59,44 +59,44 @@ def load_fresh_model():
 def make_head_mask_hook(masked_heads):
     """Zero out specific head channels in TimesformerSelfAttention output."""
     def hook(module, input, output):
-        ctx = output[0].clone()
+        x = output[0].clone()
         for h in masked_heads:
-            ctx[..., h * HEAD_SIZE:(h + 1) * HEAD_SIZE] = 0.0
-        return (ctx,) + output[1:]
+            x[..., h * HEAD_SIZE:(h + 1) * HEAD_SIZE] = 0.0
+        return (x,) + output[1:]
     return hook
 
 
 def register_mask_hooks(model, head_pairs):
     """Register one masking hook per layer and return the handles."""
-    layer_to_heads = {}
-    for (layer, head) in head_pairs:
-        layer_to_heads.setdefault(layer, []).append(head)
+    by_layer = {}
+    for layer, head in head_pairs:
+        by_layer.setdefault(layer, []).append(head)
 
-    handles = []
-    for layer_idx, heads in layer_to_heads.items():
-        module = model.timesformer.encoder.layer[layer_idx].temporal_attention.attention
-        handle = module.register_forward_hook(make_head_mask_hook(heads))
-        handles.append(handle)
-    return handles
+    hs = []
+    for layer_idx, heads in by_layer.items():
+        mod = model.timesformer.encoder.layer[layer_idx].temporal_attention.attention
+        h = mod.register_forward_hook(make_head_mask_hook(heads))
+        hs.append(h)
+    return hs
 
 
-def remove_hooks(handles):
-    for h in handles:
+def remove_hooks(hs):
+    for h in hs:
         h.remove()
 
 
 def apply_spectral_norm(model, target_layers):
     """Apply spectral norm to Q, K, V projections in temporal attention."""
     for idx in target_layers:
-        attn = model.timesformer.encoder.layer[idx].temporal_attention.attention
-        attn.qkv = spectral_norm(attn.qkv)
+        mod = model.timesformer.encoder.layer[idx].temporal_attention.attention
+        mod.qkv = spectral_norm(mod.qkv)
     print(f"  Spectral norm applied to layers {sorted(target_layers)}")
 
 
 def evaluate(model, dataloader, desc=""):
     model.eval()
-    all_probs  = {}
-    all_labels = {}
+    prob_buf = {}
+    label_map = {}
 
     t0 = time.time()
     with torch.no_grad():
@@ -108,8 +108,8 @@ def evaluate(model, dataloader, desc=""):
             for prob, label, sidx in zip(probs, labels, sample_indices):
                 sidx  = sidx.item()
                 label = label.item()
-                all_probs.setdefault(sidx, []).append(prob.cpu())
-                all_labels[sidx] = label
+                prob_buf.setdefault(sidx, []).append(prob.cpu())
+                label_map[sidx] = label
 
             if batch_idx % 500 == 0:
                 elapsed = time.time() - t0
@@ -119,26 +119,26 @@ def evaluate(model, dataloader, desc=""):
                       f"| {rate:.1f} batch/s | ETA {remaining/60:.1f} min")
 
     correct_top1 = correct_top5 = 0
-    total = len(all_probs)
-    per_class_correct = {}
-    per_class_total   = {}
+    total = len(prob_buf)
+    per_cls_ok = {}
+    per_cls_n  = {}
 
-    for sidx, probs_list in all_probs.items():
-        avg_prob = torch.stack(probs_list).mean(0)
-        label    = all_labels[sidx]
+    for sidx, prob_list in prob_buf.items():
+        avg_prob = torch.stack(prob_list).mean(0)
+        label    = label_map[sidx]
 
-        per_class_total[label]   = per_class_total.get(label, 0) + 1
+        per_cls_n[label]   = per_cls_n.get(label, 0) + 1
         pred = avg_prob.argmax().item()
         if pred == label:
             correct_top1 += 1
-            per_class_correct[label] = per_class_correct.get(label, 0) + 1
+            per_cls_ok[label] = per_cls_ok.get(label, 0) + 1
         if label in avg_prob.topk(5).indices.tolist():
             correct_top5 += 1
 
     top1 = correct_top1 / total
     top5 = correct_top5 / total
-    per_class = {c: per_class_correct.get(c, 0) / per_class_total[c]
-                 for c in per_class_total}
+    per_class = {c: per_cls_ok.get(c, 0) / per_cls_n[c]
+                 for c in per_cls_n}
 
     print(f"  [{desc}] Top-1={top1*100:.2f}%  Top-5={top5*100:.2f}%  "
           f"({time.time()-t0:.0f}s)")
@@ -146,13 +146,13 @@ def evaluate(model, dataloader, desc=""):
 
 
 def save_result(name, result, extra=None):
-    record = {'experiment': name, **result}
+    blob = {'experiment': name, **result}
     if extra:
-        record.update(extra)
-    record['per_class_acc'] = {str(k): v for k, v in record.get('per_class_acc', {}).items()}
+        blob.update(extra)
+    blob['per_class_acc'] = {str(k): v for k, v in blob.get('per_class_acc', {}).items()}
     path = os.path.join(RESULTS_DIR, f'{name}.json')
     with open(path, 'w') as f:
-        json.dump(record, f, indent=2)
+        json.dump(blob, f, indent=2)
     print(f"  Saved → {path}")
 
 
@@ -174,160 +174,160 @@ def main():
         num_workers=NUM_WORKERS, collate_fn=collate_fn, pin_memory=False)
     print(f"  {len(dataset.samples)} videos × {NUM_CROPS} crops = {len(dataset)} samples")
 
-    all_results = {}
+    res_all = {}
 
-    cached = load_result('baseline')
-    if cached:
+    old = load_result('baseline')
+    if old:
         print("\n[Baseline] Skipping — already done")
-        baseline_top1 = cached['top1']
-        all_results['baseline'] = cached
+        base_top1 = old['top1']
+        res_all['baseline'] = old
     else:
         print("\n[Baseline] No hooks, unmodified model")
         model = load_fresh_model()
         res = evaluate(model, dataloader, "Baseline")
         save_result('baseline', res)
-        all_results['baseline'] = res
-        baseline_top1 = res['top1']
+        res_all['baseline'] = res
+        base_top1 = res['top1']
 
-    cached = load_result('exp1_harmful_masking')
-    if cached:
+    old = load_result('exp1_harmful_masking')
+    if old:
         print("\n[Exp 1] Skipping — already done")
-        all_results['exp1'] = cached
+        res_all['exp1'] = old
     else:
         print("\n[Exp 1] Harmful head masking: L5-H2, L2-H1, L6-H7, L0-H4")
         if 'model' not in dir():
             model = load_fresh_model()
-        handles = register_mask_hooks(model, HARMFUL_HEADS)
+        hs = register_mask_hooks(model, HARMFUL_HEADS)
         res = evaluate(model, dataloader, "Exp1")
-        remove_hooks(handles)
+        remove_hooks(hs)
         save_result('exp1_harmful_masking', res, {
             'masked_heads': HARMFUL_HEADS,
-            'delta_top1': res['top1'] - baseline_top1})
-        all_results['exp1'] = res
+            'delta_top1': res['top1'] - base_top1})
+        res_all['exp1'] = res
 
-    cached = load_result('exp2_negligible_pruning')
-    if cached:
+    old = load_result('exp2_negligible_pruning')
+    if old:
         print("\n[Exp 2] Skipping — already done")
-        all_results['exp2'] = cached
+        res_all['exp2'] = old
     else:
         print(f"\n[Exp 2] Negligible head pruning: {NEGLIGIBLE_HEADS}")
         if 'model' not in dir():
             model = load_fresh_model()
-        handles = register_mask_hooks(model, NEGLIGIBLE_HEADS)
+        hs = register_mask_hooks(model, NEGLIGIBLE_HEADS)
         res = evaluate(model, dataloader, "Exp2")
-        remove_hooks(handles)
+        remove_hooks(hs)
         save_result('exp2_negligible_pruning', res, {
             'masked_heads': NEGLIGIBLE_HEADS,
-            'delta_top1': res['top1'] - baseline_top1})
-        all_results['exp2'] = res
+            'delta_top1': res['top1'] - base_top1})
+        res_all['exp2'] = res
 
-    cached = load_result('exp1p2_combined_masking')
-    if cached:
+    old = load_result('exp1p2_combined_masking')
+    if old:
         print("\n[Exp 1+2] Skipping — already done")
-        all_results['exp1p2'] = cached
+        res_all['exp1p2'] = old
     else:
         print("\n[Exp 1+2] Combined masking: 14 heads total")
         if 'model' not in dir():
             model = load_fresh_model()
-        all_heads = HARMFUL_HEADS + NEGLIGIBLE_HEADS
-        handles = register_mask_hooks(model, all_heads)
+        heads_now = HARMFUL_HEADS + NEGLIGIBLE_HEADS
+        hs = register_mask_hooks(model, heads_now)
         res = evaluate(model, dataloader, "Exp1+2")
-        remove_hooks(handles)
+        remove_hooks(hs)
         save_result('exp1p2_combined_masking', res, {
-            'masked_heads': all_heads,
-            'delta_top1': res['top1'] - baseline_top1})
-        all_results['exp1p2'] = res
+            'masked_heads': heads_now,
+            'delta_top1': res['top1'] - base_top1})
+        res_all['exp1p2'] = res
 
-    cached = load_result('exp4_spectral_norm')
-    if cached:
+    old = load_result('exp4_spectral_norm')
+    if old:
         print("\n[Exp 4] Skipping — already done")
-        all_results['exp4'] = cached
+        res_all['exp4'] = old
     else:
         print("\n[Exp 4] Spectral norm on QKV for harmful layers {0,2,5,6}")
-        model_sn = load_fresh_model()
-        apply_spectral_norm(model_sn, HARMFUL_LAYERS)
-        res = evaluate(model_sn, dataloader, "Exp4")
+        sn_model = load_fresh_model()
+        apply_spectral_norm(sn_model, HARMFUL_LAYERS)
+        res = evaluate(sn_model, dataloader, "Exp4")
         save_result('exp4_spectral_norm', res, {
             'spectral_norm_layers': sorted(HARMFUL_LAYERS),
-            'delta_top1': res['top1'] - baseline_top1})
-        all_results['exp4'] = res
-        del model_sn
+            'delta_top1': res['top1'] - base_top1})
+        res_all['exp4'] = res
+        del sn_model
 
-    cached = load_result('exp4p1_spectralnorm_masking')
-    if cached:
+    old = load_result('exp4p1_spectralnorm_masking')
+    if old:
         print("\n[Exp 4+1] Skipping — already done")
-        all_results['exp4p1'] = cached
+        res_all['exp4p1'] = old
     else:
         print("\n[Exp 4+1] Spectral norm + harmful head masking")
-        model_sn1 = load_fresh_model()
-        apply_spectral_norm(model_sn1, HARMFUL_LAYERS)
-        handles = register_mask_hooks(model_sn1, HARMFUL_HEADS)
-        res = evaluate(model_sn1, dataloader, "Exp4+1")
-        remove_hooks(handles)
+        sn_mask_model = load_fresh_model()
+        apply_spectral_norm(sn_mask_model, HARMFUL_LAYERS)
+        hs = register_mask_hooks(sn_mask_model, HARMFUL_HEADS)
+        res = evaluate(sn_mask_model, dataloader, "Exp4+1")
+        remove_hooks(hs)
         save_result('exp4p1_spectralnorm_masking', res, {
             'spectral_norm_layers': sorted(HARMFUL_LAYERS),
             'masked_heads': HARMFUL_HEADS,
-            'delta_top1': res['top1'] - baseline_top1})
-        all_results['exp4p1'] = res
-        del model_sn1
+            'delta_top1': res['top1'] - base_top1})
+        res_all['exp4p1'] = res
+        del sn_mask_model
 
-    cached = load_result('control_a_random4')
-    if cached:
+    old = load_result('control_a_random4')
+    if old:
         print("\n[Control A] Skipping — already done")
-        all_results['control_a'] = cached
+        res_all['control_a'] = old
     else:
         print("\n[Control A] Random 4 heads masked (3 seeds)")
         if 'model' not in dir():
             model = load_fresh_model()
-        ctrl_a_results = []
-        all_layer_head_pairs = [(l, h) for l in range(12) for h in range(NUM_HEADS)]
+        ctrl_a_runs = []
+        head_pool = [(l, h) for l in range(12) for h in range(NUM_HEADS)]
         for seed in [0, 1, 2]:
             rng = random.Random(seed)
-            rand_heads = rng.sample(all_layer_head_pairs, 4)
-            print(f"  Seed {seed}: {rand_heads}")
-            handles = register_mask_hooks(model, rand_heads)
+            picked = rng.sample(head_pool, 4)
+            print(f"  Seed {seed}: {picked}")
+            hs = register_mask_hooks(model, picked)
             res = evaluate(model, dataloader, f"CtrlA-s{seed}")
-            remove_hooks(handles)
-            ctrl_a_results.append({'seed': seed, 'heads': rand_heads, **res,
-                                    'delta_top1': res['top1'] - baseline_top1})
-        ctrl_a_mean = np.mean([r['top1'] for r in ctrl_a_results])
-        ctrl_a_std  = np.std([r['top1']  for r in ctrl_a_results])
+            remove_hooks(hs)
+            ctrl_a_runs.append({'seed': seed, 'heads': picked, **res,
+                                'delta_top1': res['top1'] - base_top1})
+        ctrl_a_mean = np.mean([r['top1'] for r in ctrl_a_runs])
+        ctrl_a_std  = np.std([r['top1']  for r in ctrl_a_runs])
         save_result('control_a_random4', {
-            'top1': ctrl_a_mean, 'top5': np.mean([r['top5'] for r in ctrl_a_results]),
+            'top1': ctrl_a_mean, 'top5': np.mean([r['top5'] for r in ctrl_a_runs]),
             'top1_std': ctrl_a_std, 'per_class_acc': {},
-            'n': ctrl_a_results[0]['n']}, {
-            'seeds': ctrl_a_results,
-            'delta_top1_mean': ctrl_a_mean - baseline_top1})
-        all_results['control_a'] = {'top1': ctrl_a_mean, 'top1_std': ctrl_a_std}
+            'n': ctrl_a_runs[0]['n']}, {
+            'seeds': ctrl_a_runs,
+            'delta_top1_mean': ctrl_a_mean - base_top1})
+        res_all['control_a'] = {'top1': ctrl_a_mean, 'top1_std': ctrl_a_std}
 
-    cached = load_result('control_b_random10')
-    if cached:
+    old = load_result('control_b_random10')
+    if old:
         print("\n[Control B] Skipping — already done")
-        all_results['control_b'] = cached
+        res_all['control_b'] = old
     else:
         print("\n[Control B] Random 10 heads masked (3 seeds)")
         if 'model' not in dir():
             model = load_fresh_model()
-        ctrl_b_results = []
-        all_layer_head_pairs = [(l, h) for l in range(12) for h in range(NUM_HEADS)]
+        ctrl_b_runs = []
+        head_pool = [(l, h) for l in range(12) for h in range(NUM_HEADS)]
         for seed in [0, 1, 2]:
             rng = random.Random(seed + 10)
-            rand_heads = rng.sample(all_layer_head_pairs, 10)
-            print(f"  Seed {seed}: {rand_heads}")
-            handles = register_mask_hooks(model, rand_heads)
+            picked = rng.sample(head_pool, 10)
+            print(f"  Seed {seed}: {picked}")
+            hs = register_mask_hooks(model, picked)
             res = evaluate(model, dataloader, f"CtrlB-s{seed}")
-            remove_hooks(handles)
-            ctrl_b_results.append({'seed': seed, 'heads': rand_heads, **res,
-                                    'delta_top1': res['top1'] - baseline_top1})
-        ctrl_b_mean = np.mean([r['top1'] for r in ctrl_b_results])
-        ctrl_b_std  = np.std([r['top1']  for r in ctrl_b_results])
+            remove_hooks(hs)
+            ctrl_b_runs.append({'seed': seed, 'heads': picked, **res,
+                                'delta_top1': res['top1'] - base_top1})
+        ctrl_b_mean = np.mean([r['top1'] for r in ctrl_b_runs])
+        ctrl_b_std  = np.std([r['top1']  for r in ctrl_b_runs])
         save_result('control_b_random10', {
-            'top1': ctrl_b_mean, 'top5': np.mean([r['top5'] for r in ctrl_b_results]),
+            'top1': ctrl_b_mean, 'top5': np.mean([r['top5'] for r in ctrl_b_runs]),
             'top1_std': ctrl_b_std, 'per_class_acc': {},
-            'n': ctrl_b_results[0]['n']}, {
-            'seeds': ctrl_b_results,
-            'delta_top1_mean': ctrl_b_mean - baseline_top1})
-        all_results['control_b'] = {'top1': ctrl_b_mean, 'top1_std': ctrl_b_std}
+            'n': ctrl_b_runs[0]['n']}, {
+            'seeds': ctrl_b_runs,
+            'delta_top1_mean': ctrl_b_mean - base_top1})
+        res_all['control_b'] = {'top1': ctrl_b_mean, 'top1_std': ctrl_b_std}
 
     print("\n" + "=" * 65)
     print("  GROUP A SUMMARY")
@@ -336,26 +336,26 @@ def main():
     print("-" * 65)
     names = [
         ('Baseline',        'baseline',   None),
-        ('Exp 1 Harmful',   'exp1',       baseline_top1),
-        ('Exp 2 Negligible','exp2',       baseline_top1),
-        ('Exp 1+2 Combined','exp1p2',     baseline_top1),
-        ('Exp 4 SpectralN', 'exp4',       baseline_top1),
-        ('Exp 4+1 SN+Mask', 'exp4p1',    baseline_top1),
+        ('Exp 1 Harmful',   'exp1',       base_top1),
+        ('Exp 2 Negligible','exp2',       base_top1),
+        ('Exp 1+2 Combined','exp1p2',     base_top1),
+        ('Exp 4 SpectralN', 'exp4',       base_top1),
+        ('Exp 4+1 SN+Mask', 'exp4p1',    base_top1),
     ]
     for label, key, base in names:
-        r = all_results[key]
+        r = res_all[key]
         delta = f"{(r['top1']-base)*100:+.2f}%" if base else "—"
         print(f"  {label:<30} {r['top1']*100:>7.2f}%  {delta:>14}")
-    ca = all_results['control_a']
-    cb = all_results['control_b']
+    ca = res_all['control_a']
+    cb = res_all['control_b']
     print(f"  {'Ctrl A Rnd4 (mean±std)':<30} {ca['top1']*100:>7.2f}% ±{ca['top1_std']*100:.2f}%")
     print(f"  {'Ctrl B Rnd10 (mean±std)':<30} {cb['top1']*100:>7.2f}% ±{cb['top1_std']*100:.2f}%")
     print("=" * 65)
 
     summary_path = os.path.join(RESULTS_DIR, 'group_a_summary.json')
     with open(summary_path, 'w') as f:
-        json.dump({'baseline_top1': baseline_top1, 'experiments': {
-            k: {'top1': v['top1']} for k, v in all_results.items()}}, f, indent=2)
+        json.dump({'baseline_top1': base_top1, 'experiments': {
+            k: {'top1': v['top1']} for k, v in res_all.items()}}, f, indent=2)
     print(f"\nSummary → {summary_path}")
 
 

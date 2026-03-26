@@ -14,20 +14,20 @@ EMBED_DIM = 768
 C_ADJUSTED = 1.0 / len(LAYERS)
 
 print("Loading and scaling embeddings...")
-scaled_train_parts, scaled_test_parts = [], []
+train_bits, test_bits = [], []
 
 for l in LAYERS:
-    layer_dir = os.path.join(PROBE_DIR, f"layer_{l:02d}")
-    train_emb = np.load(os.path.join(layer_dir, "embeddings.npy"))
-    test_emb  = np.load(os.path.join(layer_dir, "test_embeddings.npy"))
+    d = os.path.join(PROBE_DIR, f"layer_{l:02d}")
+    train_emb = np.load(os.path.join(d, "embeddings.npy"))
+    test_emb  = np.load(os.path.join(d, "test_embeddings.npy"))
     print(f"  Layer {l}: train {train_emb.shape}, test {test_emb.shape}")
 
     sc = StandardScaler()
-    scaled_train_parts.append(sc.fit_transform(train_emb))
-    scaled_test_parts.append(sc.transform(test_emb))
+    train_bits.append(sc.fit_transform(train_emb))
+    test_bits.append(sc.transform(test_emb))
 
-train_concat = np.concatenate(scaled_train_parts, axis=1)
-test_concat  = np.concatenate(scaled_test_parts,  axis=1)
+train_concat = np.concatenate(train_bits, axis=1)
+test_concat  = np.concatenate(test_bits,  axis=1)
 print(f"\nConcatenated shape: train {train_concat.shape}, test {test_concat.shape}")
 
 train_labels = np.load(os.path.join(PROBE_DIR, "layer_11", "labels.npy"))
@@ -41,40 +41,40 @@ preds    = clf.predict(test_concat)
 test_acc = accuracy_score(test_labels, preds)
 
 with open(os.path.join(PROBE_DIR, "layer_11", "probe_accuracy.json")) as f:
-    baseline_acc = json.load(f)["test_acc"]
+    base_acc = json.load(f)["test_acc"]
 
 shapley_results_path = os.path.join(PROBE_DIR, "summary", "shapley_weighted_results.json")
-shapley_acc = None
+shap_acc = None
 if os.path.exists(shapley_results_path):
     with open(shapley_results_path) as f:
-        shapley_acc = json.load(f).get("test_acc")
+        shap_acc = json.load(f).get("test_acc")
 
 learned_results_path = os.path.join(PROBE_DIR, "summary", "learned_weighted_results.json")
-learned_acc = None
+learn_acc = None
 if os.path.exists(learned_results_path):
     with open(learned_results_path) as f:
-        learned_acc = json.load(f).get("test_acc")
+        learn_acc = json.load(f).get("test_acc")
 
 print("\n" + "="*60)
 print("RESULTS — Last-4-layer fusion comparison")
 print("="*60)
 print(f"  {'Method':<30} {'Test Acc':>10}  {'Delta vs L11':>14}")
 print(f"  {'-'*56}")
-print(f"  {'Layer 11 only (baseline)':<30} {baseline_acc:>10.4f}  {'—':>14}")
-if shapley_acc is not None:
-    print(f"  {'Shapley-weighted sum':<30} {shapley_acc:>10.4f}  {shapley_acc - baseline_acc:>+14.4f}")
-if learned_acc is not None:
-    print(f"  {'Learned weighted sum':<30} {learned_acc:>10.4f}  {learned_acc - baseline_acc:>+14.4f}")
-print(f"  {'Concatenation (C={:.2f})'.format(C_ADJUSTED):<30} {test_acc:>10.4f}  {test_acc - baseline_acc:>+14.4f}")
+print(f"  {'Layer 11 only (baseline)':<30} {base_acc:>10.4f}  {'—':>14}")
+if shap_acc is not None:
+    print(f"  {'Shapley-weighted sum':<30} {shap_acc:>10.4f}  {shap_acc - base_acc:>+14.4f}")
+if learn_acc is not None:
+    print(f"  {'Learned weighted sum':<30} {learn_acc:>10.4f}  {learn_acc - base_acc:>+14.4f}")
+print(f"  {'Concatenation (C={:.2f})'.format(C_ADJUSTED):<30} {test_acc:>10.4f}  {test_acc - base_acc:>+14.4f}")
 print("="*60)
 print(f"\nConcat dim: {train_concat.shape[1]}  |  C adjusted: 1.0/{len(LAYERS)} = {C_ADJUSTED}")
 
 out_dir = os.path.join(PROBE_DIR, "summary")
 os.makedirs(out_dir, exist_ok=True)
-results = {
+dump = {
     "test_acc":          test_acc,
-    "baseline_acc":      baseline_acc,
-    "delta":             test_acc - baseline_acc,
+    "baseline_acc":      base_acc,
+    "delta":             test_acc - base_acc,
     "concat_dim":        int(train_concat.shape[1]),
     "embed_dim":         EMBED_DIM,
     "num_layers":        len(LAYERS),
@@ -84,5 +84,5 @@ results = {
 }
 out_path = os.path.join(out_dir, "concat_results.json")
 with open(out_path, "w") as f:
-    json.dump(results, f, indent=2)
+    json.dump(dump, f, indent=2)
 print(f"\nSaved to {out_path}")

@@ -13,23 +13,23 @@ LAYERS    = [8, 9, 10, 11]
 EPOCHS    = 100
 
 print("Loading embeddings...")
-train_embs, test_embs = [], []
+train_bits, test_bits = [], []
 for l in LAYERS:
     d = os.path.join(PROBE_DIR, f"layer_{l:02d}")
-    train_embs.append(np.load(os.path.join(d, "embeddings.npy")))
-    test_embs.append(np.load(os.path.join(d, "test_embeddings.npy")))
+    train_bits.append(np.load(os.path.join(d, "embeddings.npy")))
+    test_bits.append(np.load(os.path.join(d, "test_embeddings.npy")))
 
 train_labels = np.load(os.path.join(PROBE_DIR, "layer_11", "labels.npy"))
 test_labels  = np.load(os.path.join(PROBE_DIR, "layer_11", "test_labels.npy"))
 
-scaled_train, scaled_test = [], []
-for t, e in zip(train_embs, test_embs):
+train_scaled, test_scaled = [], []
+for t, e in zip(train_bits, test_bits):
     sc = StandardScaler()
-    scaled_train.append(sc.fit_transform(t).astype(np.float32))
-    scaled_test.append(sc.transform(e).astype(np.float32))
+    train_scaled.append(sc.fit_transform(t).astype(np.float32))
+    test_scaled.append(sc.transform(e).astype(np.float32))
 
-X_train = torch.tensor(np.stack(scaled_train, axis=1))
-X_test  = torch.tensor(np.stack(scaled_test,  axis=1))
+X_train = torch.tensor(np.stack(train_scaled, axis=1))
+X_test  = torch.tensor(np.stack(test_scaled,  axis=1))
 y_train = torch.tensor(train_labels, dtype=torch.long)
 y_test  = torch.tensor(test_labels,  dtype=torch.long)
 num_classes = int(y_train.max().item()) + 1
@@ -60,9 +60,9 @@ print(f"Device: {device}\n")
 test_ds     = TensorDataset(X_test, y_test)
 test_loader = DataLoader(test_ds, batch_size=512)
 
-best_acc    = 0
-best_config = None
-all_results = []
+best_acc = 0
+best_cfg = None
+runs = []
 
 total_configs = len(LR_VALUES) * len(WEIGHT_DECAY_VALUES) * len(BATCH_VALUES)
 run = 0
@@ -94,35 +94,35 @@ for lr in LR_VALUES:
                 scheduler.step()
 
             model.eval()
-            correct, total = 0, 0
+            ok, n = 0, 0
             with torch.no_grad():
                 for xb, yb in test_loader:
                     xb, yb = xb.to(device), yb.to(device)
-                    correct += (model(xb).argmax(1) == yb).sum().item()
-                    total   += len(yb)
-            acc = correct / total
+                    ok += (model(xb).argmax(1) == yb).sum().item()
+                    n  += len(yb)
+            acc = ok / n
 
-            w = model.get_weights()
-            w_str = "  ".join(f"L{l}:{w[i]:.3f}" for i, l in enumerate(LAYERS))
+            ws = model.get_weights()
+            w_line = "  ".join(f"L{l}:{ws[i]:.3f}" for i, l in enumerate(LAYERS))
             marker = " <-- best" if acc > best_acc else ""
-            print(f"  acc={acc*100:.2f}%  weights=[{w_str}]{marker}", flush=True)
+            print(f"  acc={acc*100:.2f}%  weights=[{w_line}]{marker}", flush=True)
 
             if acc > best_acc:
-                best_acc    = acc
-                best_config = {"lr": lr, "weight_decay": wd, "batch": batch}
+                best_acc = acc
+                best_cfg = {"lr": lr, "weight_decay": wd, "batch": batch}
 
-            all_results.append({
+            runs.append({
                 "lr": lr, "weight_decay": wd, "batch": batch,
                 "test_acc": acc,
-                "learned_weights": {f"layer_{l}": float(w[i]) for i, l in enumerate(LAYERS)}
+                "learned_weights": {f"layer_{l}": float(ws[i]) for i, l in enumerate(LAYERS)}
             })
 
-print(f"\nBEST: lr={best_config['lr']}, wd={best_config['weight_decay']}, "
-      f"batch={best_config['batch']}  ->  {best_acc*100:.2f}%")
+print(f"\nBEST: lr={best_cfg['lr']}, wd={best_cfg['weight_decay']}, "
+      f"batch={best_cfg['batch']}  ->  {best_acc*100:.2f}%")
 
 out_dir = os.path.join(PROBE_DIR, "summary", "hyperparam_search")
 os.makedirs(out_dir, exist_ok=True)
 out_path = os.path.join(out_dir, "learned_search_results.json")
 with open(out_path, "w") as f:
-    json.dump({"best": {**best_config, "test_acc": best_acc}, "all": all_results}, f, indent=2)
+    json.dump({"best": {**best_cfg, "test_acc": best_acc}, "all": runs}, f, indent=2)
 print(f"Saved to {out_path}")

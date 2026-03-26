@@ -18,8 +18,8 @@ import matplotlib.pyplot as plt
 
 def load_embeddings(probe_dir, num_layers=12):
     """Load all layer embeddings and labels from disk."""
-    layer_results = {}
-    labels = None
+    layer_stuff = {}
+    ys = None
 
     for i in range(num_layers):
         layer_dir = os.path.join(probe_dir, f'layer_{i:02d}')
@@ -31,35 +31,35 @@ def load_embeddings(probe_dir, num_layers=12):
             continue
 
         emb = np.load(emb_path)
-        layer_results[i] = {'embeddings': emb}
+        layer_stuff[i] = {'embeddings': emb}
 
-        if labels is None and os.path.exists(lbl_path):
-            labels = np.load(lbl_path)
+        if ys is None and os.path.exists(lbl_path):
+            ys = np.load(lbl_path)
 
         print(f"  Layer {i:2d}: {emb.shape}")
 
-    if labels is None:
+    if ys is None:
         raise RuntimeError("Could not find labels.npy in any layer directory.")
 
-    return layer_results, labels
+    return layer_stuff, ys
 
 
-def coalition_value(layer_results, labels, coalition,
+def coalition_value(layer_results, labels, picked,
                     test_size=0.3, random_state=42):
     """
     Accuracy of a linear probe on concatenated features from coalition layers.
     Empty coalition = majority class baseline.
     """
-    if len(coalition) == 0:
-        unique, counts = np.unique(labels, return_counts=True)
+    if len(picked) == 0:
+        _, counts = np.unique(labels, return_counts=True)
         return float(counts.max()) / len(labels)
 
-    feats = np.concatenate(
-        [layer_results[i]['embeddings'] for i in sorted(coalition)], axis=1
+    x = np.concatenate(
+        [layer_results[i]['embeddings'] for i in sorted(picked)], axis=1
     )
 
     X_train, X_test, y_train, y_test = train_test_split(
-        feats, labels, test_size=test_size,
+        x, labels, test_size=test_size,
         random_state=random_state
     )
 
@@ -79,10 +79,10 @@ def approx_shapley(layer_results, labels, num_layers, n_permutations,
     players = list(layer_results.keys())
     n = len(players)
 
-    shapley = {i: 0.0 for i in players}
-    cache = {}
-    total_fits = 0
-    cache_hits = 0
+    svs = {i: 0.0 for i in players}
+    seen = {}
+    fit_ct = 0
+    hit_ct = 0
 
     start = time.time()
     print(f"\nApproximate Shapley: {n_permutations} permutations, "
@@ -92,86 +92,86 @@ def approx_shapley(layer_results, labels, num_layers, n_permutations,
 
     for perm_idx in range(n_permutations):
         perm = rng.permutation(players).tolist()
-        coalition = []
+        so_far = []
 
         for step, player in enumerate(perm):
-            key_before = frozenset(coalition)
-            if key_before in cache:
-                v_before = cache[key_before]
-                cache_hits += 1
+            key_before = frozenset(so_far)
+            if key_before in seen:
+                v_before = seen[key_before]
+                hit_ct += 1
             else:
                 v_before = coalition_value(layer_results, labels,
                                            list(key_before))
-                cache[key_before] = v_before
-                total_fits += 1
+                seen[key_before] = v_before
+                fit_ct += 1
 
-            coalition_with = coalition + [player]
-            key_after = frozenset(coalition_with)
-            if key_after in cache:
-                v_after = cache[key_after]
-                cache_hits += 1
+            with_player = so_far + [player]
+            key_after = frozenset(with_player)
+            if key_after in seen:
+                v_after = seen[key_after]
+                hit_ct += 1
             else:
                 v_after = coalition_value(layer_results, labels,
-                                          coalition_with)
-                cache[key_after] = v_after
-                total_fits += 1
+                                          with_player)
+                seen[key_after] = v_after
+                fit_ct += 1
 
             marginal = v_after - v_before
-            shapley[player] += marginal / n_permutations
+            svs[player] += marginal / n_permutations
 
-            coalition.append(player)
+            so_far.append(player)
 
         elapsed = time.time() - start
         rate = (perm_idx + 1) / elapsed
         remaining = (n_permutations - perm_idx - 1) / rate if rate > 0 else 0
 
         print(f"  Permutation {perm_idx+1:3d}/{n_permutations}  |  "
-              f"cache size: {len(cache):4d}  |  "
-              f"fits: {total_fits:4d}  hits: {cache_hits:4d}  |  "
+              f"cache size: {len(seen):4d}  |  "
+              f"fits: {fit_ct:4d}  hits: {hit_ct:4d}  |  "
               f"elapsed: {elapsed/60:.1f}m  "
               f"remaining: {remaining/60:.1f}m")
 
     elapsed = time.time() - start
     print(f"\nDone in {elapsed/60:.1f} minutes")
-    print(f"Total LR fits: {total_fits}  (cache saved {cache_hits} fits)")
+    print(f"Total LR fits: {fit_ct}  (cache saved {hit_ct} fits)")
 
-    return shapley, cache
+    return svs, seen
 
 
 def load_probe_accuracies(probe_dir, num_layers):
     """Load per-layer test accuracies from saved probe_accuracy.json files."""
-    accs = {}
+    acc_map = {}
     for i in range(num_layers):
         path = os.path.join(probe_dir, f'layer_{i:02d}', 'probe_accuracy.json')
         if os.path.exists(path):
             with open(path) as f:
-                d = json.load(f)
-            accs[i] = d.get('test_acc', 0.0)
-    return accs
+                row = json.load(f)
+            acc_map[i] = row.get('test_acc', 0.0)
+    return acc_map
 
 
-def save_and_plot(shapley, cache, probe_dir, n_permutations, n_samples):
-    summary_dir = os.path.join(probe_dir, 'summary')
-    os.makedirs(summary_dir, exist_ok=True)
+def save_and_plot(svs, seen, probe_dir, n_permutations, n_samples):
+    out_dir = os.path.join(probe_dir, 'summary')
+    os.makedirs(out_dir, exist_ok=True)
 
-    players = sorted(shapley.keys())
+    players = sorted(svs.keys())
     num_layers = len(players)
-    probe_accs = load_probe_accuracies(probe_dir, num_layers)
+    acc_map = load_probe_accuracies(probe_dir, num_layers)
 
     print(f"\n{'='*60}")
     print("SHAPLEY VALUE RANKING")
     print(f"{'='*60}")
-    ranked = sorted(shapley.items(), key=lambda x: x[1], reverse=True)
+    ranked = sorted(svs.items(), key=lambda x: x[1], reverse=True)
     for rank, (layer, sv) in enumerate(ranked):
-        acc = probe_accs.get(layer, float('nan'))
+        acc = acc_map.get(layer, float('nan'))
         print(f"  #{rank+1:2d}  Layer {layer:2d}  |  "
               f"Shapley: {sv:+.6f}  |  Probe acc: {acc:.4f}")
 
-    shapley_export = {
+    sv_dump = {
         'method': 'permutation_sampling',
         'n_permutations': n_permutations,
         'n_samples': n_samples,
-        'shapley_values': {str(k): float(v) for k, v in shapley.items()},
+        'shapley_values': {str(k): float(v) for k, v in svs.items()},
         'ranking': [str(k) for k, v in ranked],
         'description': (
             'Approximate Shapley value via random permutation sampling. '
@@ -179,23 +179,23 @@ def save_and_plot(shapley, cache, probe_dir, n_permutations, n_samples):
             f'{n_permutations} random orderings.'
         ),
     }
-    sv_path = os.path.join(summary_dir, 'shapley_values.json')
+    sv_path = os.path.join(out_dir, 'shapley_values.json')
     with open(sv_path, 'w') as f:
-        json.dump(shapley_export, f, indent=2)
+        json.dump(sv_dump, f, indent=2)
     print(f"\nSaved: {sv_path}")
 
-    coalition_export = {}
-    for coalition_set, value in cache.items():
-        key = ','.join(str(x) for x in sorted(coalition_set)) or 'empty'
-        coalition_export[key] = value
-    cc_path = os.path.join(summary_dir, 'coalition_values.json')
+    coal_dump = {}
+    for combo_key, value in seen.items():
+        key = ','.join(str(x) for x in sorted(combo_key)) or 'empty'
+        coal_dump[key] = value
+    cc_path = os.path.join(out_dir, 'coalition_values.json')
     with open(cc_path, 'w') as f:
-        json.dump(coalition_export, f, indent=2)
+        json.dump(coal_dump, f, indent=2)
     print(f"Saved: {cc_path}")
 
     layers = players
-    sv_vals = [shapley[l] for l in layers]
-    acc_vals = [probe_accs.get(l, 0) for l in layers]
+    sv_vals = [svs[layer] for layer in layers]
+    acc_vals = [acc_map.get(layer, 0) for layer in layers]
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
@@ -227,7 +227,7 @@ def save_and_plot(shapley, cache, probe_dir, n_permutations, n_samples):
     axes[2].grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plot_path = os.path.join(summary_dir, 'layer_comparison_plot.png')
+    plot_path = os.path.join(out_dir, 'layer_comparison_plot.png')
     plt.savefig(plot_path, dpi=150, bbox_inches='tight')
     plt.close()
     print(f"Saved: {plot_path}")
@@ -256,21 +256,21 @@ def main():
     print(f"  num_layers:     {args.num_layers}")
 
     print("\nLoading saved embeddings...")
-    layer_results, labels = load_embeddings(args.probe_dir, args.num_layers)
-    print(f"Loaded {len(layer_results)} layers, {len(labels)} samples")
+    layer_stuff, ys = load_embeddings(args.probe_dir, args.num_layers)
+    print(f"Loaded {len(layer_stuff)} layers, {len(ys)} samples")
 
-    if args.n_samples < len(labels):
+    if args.n_samples < len(ys):
         rng = np.random.RandomState(args.random_state)
-        idx = rng.choice(len(labels), args.n_samples, replace=False)
-        layer_results_sub = {
+        keep = rng.choice(len(ys), args.n_samples, replace=False)
+        layer_stuff_sub = {
             i: {'embeddings': v['embeddings'][idx]}
-            for i, v in layer_results.items()
+            for i, v in layer_stuff.items()
         }
-        labels_sub = labels[idx]
+        ys_sub = ys[keep]
         print(f"Subsampled to {args.n_samples} videos for coalition evaluation")
     else:
-        layer_results_sub = layer_results
-        labels_sub = labels
+        layer_stuff_sub = layer_stuff
+        ys_sub = ys
 
     est_unique = min(args.n_permutations * args.num_layers * 2,
                      2 ** args.num_layers)
@@ -278,14 +278,14 @@ def main():
     print(f"Estimated time: {est_unique * 25 / 3600:.1f}–"
           f"{est_unique * 60 / 3600:.1f} hours (25–60s per LR fit)")
 
-    shapley, cache = approx_shapley(
-        layer_results_sub, labels_sub,
-        num_layers=len(layer_results_sub),
+    svs, seen = approx_shapley(
+        layer_stuff_sub, ys_sub,
+        num_layers=len(layer_stuff_sub),
         n_permutations=args.n_permutations,
         random_state=args.random_state
     )
 
-    save_and_plot(shapley, cache, args.probe_dir,
+    save_and_plot(svs, seen, args.probe_dir,
                   args.n_permutations, args.n_samples)
 
     print("\nDone!")
