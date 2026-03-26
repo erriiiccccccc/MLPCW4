@@ -38,7 +38,7 @@ def inspect_model(model_dir):
         print(f"  Found {len(blks)} transformer blocks")
         print(f"  First block type: {type(blks[0]).__name__}")
     else:
-        print("  WARNING: Could not auto-detect blocks. Check output above.")
+        print("  WARNING: Could not auto-detect blocks.")
 
     return net
 
@@ -75,7 +75,7 @@ def load_model(model_dir):
         model.eval()
         return model
     except ImportError:
-        print("timesformer package not found, trying alternatives...")
+        print("timesformer package not found, trying others")
     except Exception as e:
         print(f"timesformer package load failed: {e}")
 
@@ -104,7 +104,6 @@ def load_model(model_dir):
 
     raise RuntimeError(
         f"Could not load model from {model_dir}. "
-        "Edit load_model() for your specific setup."
     )
 
 
@@ -192,7 +191,6 @@ class LayerFeatureExtractor:
         if self.blocks is None:
             raise RuntimeError(
                 "Cannot find transformer blocks. "
-                "Edit find_transformer_blocks() for your model."
             )
         actual_num = len(self.blocks)
         if actual_num != num_layers:

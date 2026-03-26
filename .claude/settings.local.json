@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(find '/c/Users/user/Desktop/MLP CW4 CODE' -type f -name *.pdf -o -name *paper* -o -name *report*)"
+    ]
+  }
+}

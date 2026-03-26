@@ -36,7 +36,7 @@ def load_embeddings(probe_dir, num_layers=12):
         print(f"  Layer {i:2d}: {emb.shape}")
 
     if ys is None:
-        raise RuntimeError("Could not find labels.npy in any layer directory.")
+        raise RuntimeError("Could not find labels.npy in directory.")
 
     return layer_stuff, ys
 
