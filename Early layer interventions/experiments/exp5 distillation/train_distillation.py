@@ -1,8 +1,9 @@
 """
-Exp 5: Knowledge distillation -- teacher layers {L10, L11} -> student layers {L1, L2, L5, L7}.
-Exp 5-ctrl: Same setup, CE-only (no distillation) -- control.
-
-Loss = CE + 0.1 * temporal_distillation_loss, temperature = 2.0
+knowledge distillation experiment: use teacher's temporal attention outputs to guide student layers
+- teacher: layers 10, 11 (top 2)
+- student: layers 1, 2, 5, 7 (4 early/mid layers)
+- distil loss: KL div between teacher's avg softmax and student's softmax
+- control: same setup but no distillation loss (CE only)
 """
 
 import sys, os, time
