@@ -14,11 +14,11 @@ from shared import (
 
 TEACHER_LAYERS = {10, 11}
 STUDENT_LAYERS = {1, 2, 5, 7}
-TEMP = 2.0
-DISTIL_W = 0.1
+TEMPERATURE = 2.0
+DISTIL_WEIGHT = 0.1
 
 
-def setup_hooks(model, layers):
+def register_attention_capture(model, layers):
     captured = {}
     handles = []
 
@@ -33,7 +33,7 @@ def setup_hooks(model, layers):
     return captured, handles
 
 
-def distil_loss(captured, t_layers, s_layers, temp):
+def temporal_distillation_loss(captured, t_layers, s_layers, temp):
     t_vecs = [captured[l] for l in t_layers if l in captured]
     s_vecs = [captured[l] for l in s_layers if l in captured]
     if not t_vecs or not s_vecs:
@@ -56,7 +56,7 @@ def train(model, loader, use_distil, name):
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(optim, T_max=EPOCHS)
     ce_fn = nn.CrossEntropyLoss()
 
-    captured, hooks = setup_hooks(model, TEACHER_LAYERS | STUDENT_LAYERS)
+    captured, hooks = register_attention_capture(model, TEACHER_LAYERS | STUDENT_LAYERS)
 
     model.eval()
     history = []
@@ -74,8 +74,8 @@ def train(model, loader, use_distil, name):
             ce = ce_fn(logits, labels)
 
             if use_distil:
-                dl = distil_loss(captured, TEACHER_LAYERS, STUDENT_LAYERS, TEMP)
-                loss = ce + DISTIL_W * dl
+                dl = temporal_distillation_loss(captured, TEACHER_LAYERS, STUDENT_LAYERS, TEMPERATURE)
+                loss = ce + DISTIL_WEIGHT * dl
                 ep_distil += dl.item()
             else:
                 loss = ce
@@ -117,7 +117,7 @@ def main():
         'history': hist5,
         'config': {'teacher_layers': sorted(TEACHER_LAYERS),
                    'student_layers': sorted(STUDENT_LAYERS),
-                   'temperature': TEMP, 'distil_weight': DISTIL_W,
+                   'temperature': TEMPERATURE, 'distil_weight': DISTIL_WEIGHT,
                    'base_lr': BASE_LR, 'epochs': EPOCHS, 'train_subset': 0.15}
     })
     del m5
